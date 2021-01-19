@@ -19,6 +19,6 @@ const Schema = new mongoose.Schema({
 });
 
 export default {
-  model: mongoose.model('proxy', Schema),
+  model: mongoose.model<mongoose.Document & ProxyType>('proxy', Schema),
   Schema,
 };

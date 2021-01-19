@@ -38,6 +38,6 @@ const Schema = new mongoose.Schema({
 Schema.index({ id: 1 });
 
 export default {
-  model: mongoose.model('Movie', Schema),
+  model: mongoose.model<mongoose.Document & MovieType>('Movie', Schema),
   Schema
 };

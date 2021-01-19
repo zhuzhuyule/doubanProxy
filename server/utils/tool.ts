@@ -1,6 +1,8 @@
+import dayjs from 'dayjs';
 import mongoose from 'mongoose';
+import { DATE_FORMAT } from './constants';
 
-async function updateTable(query: any, document: any, model: mongoose.Model<mongoose.Document<any>>): Promise<unknown> {
+async function updateTable<T>(query: any, document: any, model: mongoose.Model<mongoose.Document & T>): Promise<unknown> {
   const options = { upsert: true, new: true, setDefaultsOnInsert: true };
   return await model.findOneAndUpdate(query, document, options);
 }
@@ -20,8 +22,10 @@ function match(text = '', reg: RegExp, index = 0): string {
   return (matchs && matchs.length > index) ? matchs[index] : '';
 }
 
+const getDateTime = (date?: string | number): string => `${date}`.length === 12 ? `${date}`.replace(/(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)/,'20$1-$2-$3 $4:$5:$6') : dayjs(date).format(DATE_FORMAT.standard);
+
 const log = {
-  split: (sign = '*') => console.log(`[${new Date().toTimeString().slice(0, 8)}]` + `${sign}`.repeat(120 / `${sign}`.length)),
+  split: (sign = '*'): void => console.log(`[${new Date().toTimeString().slice(0, 8)}]` + `${sign}`.repeat(120 / `${sign}`.length)),
 }
 
 export default {
@@ -31,5 +35,6 @@ export default {
     getCoverImageId,
   },
   match,
+  getDateTime,
   log,
 }

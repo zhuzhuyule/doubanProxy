@@ -25,6 +25,6 @@ const Schema = new mongoose.Schema({
 });
 
 export default {
-  model: mongoose.model('dynamicMovie', Schema),
+  model: mongoose.model<mongoose.Document & DynamicMovieType>('dynamicMovie', Schema),
   Schema,
 };
