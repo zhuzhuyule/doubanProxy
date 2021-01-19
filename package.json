@@ -1,0 +1,19 @@
+{
+  "name": "douban",
+  "version": "1.0.0",
+  "description": "douban api proxy",
+  "main": "./server",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "douban",
+    "api",
+    "movie"
+  ],
+  "author": "zhuzhuyule",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^4.1.3"
+  }
+}
