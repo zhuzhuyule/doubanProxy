@@ -1,9 +1,6 @@
-// config should be imported before importing any other file
-import config from './configs/config';
-
-import express from 'express';
-
 import apiRoutes from './routes/api.routes';
+import config from './configs/config';
+import express from 'express';
 
 const app = express();
 
@@ -11,6 +8,5 @@ const app = express();
 app.use('/api/', apiRoutes);
 
 app.listen(config.port, () => {
-  console.info(`server started on port ${config.port} (${config.env})`);
+    console.info(`server started on port ${config.port} (${config.env})`);
 });
-
