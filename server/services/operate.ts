@@ -1,6 +1,7 @@
 import movieCtrl from '@controllers/movie.controller';
 import proxyCtrl from '@controllers/proxy.controller';
 import express from 'express';
+import proxy from './proxy';
 
 export async function findDoubanId(req: express.Request, res: express.Response): Promise<void>  {
   const movie = await movieCtrl.findOneById(req.params.id);
@@ -39,3 +40,7 @@ export async function findSun(req: express.Request, res: express.Response): Prom
   res.json(proxies);
 }
 
+export function getAll(_: express.Request, res: express.Response): void {
+  proxy.getAll();
+  res.send('Running get all command!')
+}
