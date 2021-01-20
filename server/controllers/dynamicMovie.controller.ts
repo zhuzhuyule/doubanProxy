@@ -1,7 +1,7 @@
 import DynamicMovie, { DynamicMovieType } from '@models/dynamicMovie.model';
 import tool from '@utils/tool';
 
-async function update(movie: DynamicMovieType & { tag: string}) {
+async function update(movie: DynamicMovieType & { tag: string}): Promise<DynamicMovieType | null> {
   const { id, title, rating, tag, tags, types, regions, vote_count, update } = movie;
   const document = {
     $set: {
@@ -21,7 +21,7 @@ async function update(movie: DynamicMovieType & { tag: string}) {
   return await tool.updateTable({ id: parseInt(`${id}`, 10) }, document, DynamicMovie.model);
 }
 
-async function notFound(id: number) {
+async function notFound(id: number): Promise<{_: string}> {
   return await DynamicMovie.model.updateOne({ id }, { $set: { notFound: true }});
 }
 

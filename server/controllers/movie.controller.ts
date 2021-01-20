@@ -1,21 +1,38 @@
 import Movie, { MovieType } from '@models/movie.model';
 import tool from '@utils/tool';
 
-async function update (movie: MovieType) {
-  return await tool.updateTable({ id: movie.id }, movie, Movie.model);
+function update (movie: MovieType) {
+  return tool.updateTable({ id: movie.id }, movie, Movie.model);
 }
 
-async function findOne (query: any) {
-  return await Movie.model.findOne(query);
+function findOne (query: any) {
+  return Movie.model.findOne(query).then(formatMovie);
 }
 
-async function find(query: any) {
-  return await Movie.model.find(query);
+function find(query: any) {
+  return Movie.model.find(query).then(movies => movies.map(formatMovie));
 }
 
-async function findOneById (id: string | number) {
-  const model = Movie.model;
-  return await Movie.model.findOne({ id: parseInt(`${id}`, 10) });
+function findOneById (id: string | number) {
+  return Movie.model.findOne({ id: parseInt(`${id}`, 10) }).then(formatMovie);
+}
+
+function formatMovie(movie: MovieType | null) {
+  return movie && {
+    id: movie.id,
+    title: movie.title,
+    year: movie.year,
+    alias: movie.alias,
+    actor: movie.actor,
+    type: movie.type,
+    region: movie.region,
+    date: movie.date,
+    time: movie.time,
+    IMDb: movie.IMDb,
+    ratingPeople: movie.ratingPeople,
+    betterThan: movie.betterThan,
+    rating: movie.rating,
+  }
 }
 
 export default {

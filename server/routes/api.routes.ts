@@ -2,9 +2,6 @@ import express from 'express'
 
 import movieCtrl from '@controllers/movie.controller';
 import proxyCtrl from '@controllers/proxy.controller';
-import dayjs from 'dayjs';
-import { DATE_FORMAT } from '@utils/constants';
-import tool from '@utils/tool';
 
 const router = express.Router() 
 router.get('/douban/:id', findDoubanId)
@@ -38,19 +35,14 @@ async function searchMovie(req: any, res: any) {
 }
 
 async function findSun(req: any, res: any) {
-  const { top = 10, h = 0, m = 0, date = '' } = req.query;
-  const proxies = await proxyCtrl.findSun(top, { hour: h, min: m, baseDate: date});
-  res.json(proxies && proxies.map(proxy => {
-    return {
-      proxy: `${proxy.ip}:${proxy.port}`,
-      type: proxy.type,
-      useCount: proxy.useCount,
-      ip: proxy.ip,
-      port: proxy.port,
-      expire_time: tool.getDateTime(proxy.expire_time),
-      invalidTime: tool.getDateTime(proxy.invalidTime),
-    }
-  }));
+  const { top = 10, h = 0, m = 0, date = '', valid = false } = req.query;
+  let proxies;
+  if (valid) {
+    proxies = await proxyCtrl.getValidProxies('sun');
+  } else {
+    proxies = await proxyCtrl.getProxies({ type: 'sun', top: parseInt(top), hour: parseInt(h), min: parseInt(m), baseDate: date});
+  }
+  res.json(proxies);
 }
 
 export default router
