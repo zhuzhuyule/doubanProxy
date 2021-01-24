@@ -5,6 +5,7 @@
   "main": "./server",
   "scripts": {
     "start": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/index.ts",
+    "start:test": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/test.ts",
     "test": "test"
   },
   "keywords": [
@@ -16,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "axios-https-proxy-fix": "^0.17.1",
+    "cheerio": "^1.0.0-rc.5",
     "dayjs": "^1.10.3",
     "debug": "^4.3.1",
     "express": "^4.17.1",
