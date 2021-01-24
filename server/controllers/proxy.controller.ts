@@ -4,9 +4,10 @@ import tool from '@utils/tool';
 import dayjs from 'dayjs';
 
 async function insert (agent: ProxyType): Promise<void | ProxyType | null> {
+  console.log('expire_time:', tool.transferTime(agent.expire_time));
   return await tool.updateTable(
      { ip: agent.ip, port: agent.port },
-     { ...agent, expire_time: tool.transferTime(agent.useCount), useCount: 0, invalidTime: 0 },
+     { ...agent, expire_time: tool.transferTime(agent.expire_time), useCount: 0, invalidTime: 0 },
       Proxy.model
     )
     .catch(e => console.log(e));
@@ -17,7 +18,7 @@ async function update (proxy: string, doc = {}, inc = {}) {
   return await Proxy.model.updateOne({ ip: agent.ip, port: agent.port }, {
     $set: doc,
     $inc: inc
-  }).catch((e: unknown) => console.log(e));
+  }, { upsert: true }).catch((e: unknown) => console.log(e));
 }
 
 async function updateUseCount (proxy: string): Promise<{_: string}> {
@@ -25,11 +26,12 @@ async function updateUseCount (proxy: string): Promise<{_: string}> {
 }
 
 async function updateInvalidTime (proxy: string): Promise<{_: string}> {
-  const time = parseInt(dayjs().format(DATE_FORMAT.standard), 10);
+  const time = parseInt(dayjs().format(DATE_FORMAT.shortInt), 10);
+  console.log('updateInvalidTime:', time);
   return await update(proxy, { invalidTime: time });
 }
 
-async function getValidProxies(type = 'sun', count  = 10) {
+async function getValidProxies(type: 'sun' | 'free', count  = 10) {
   return await Proxy.model.find({ type, invalidTime: 0 })
     .sort({ expire_time: 1 })
     .limit(count)
@@ -41,7 +43,7 @@ async function getValidProxies(type = 'sun', count  = 10) {
 }
 
 async function getProxies({ type = 'free', top = 10, hour = 0, min = 0, baseDate = '' }) {
-  const time = parseInt(dayjs(baseDate || undefined).hour(-hour).minute(-min).format(DATE_FORMAT.standard), 10);
+  const time = parseInt(dayjs(baseDate || undefined).hour(-hour).minute(-min).format(DATE_FORMAT.shortInt), 10);
   return await Proxy.model.find({ type, expire_time: { $gt: time }})
     .sort({ _id: -1 })
     .limit(top)

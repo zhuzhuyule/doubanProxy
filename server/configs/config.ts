@@ -1,3 +1,4 @@
+import customerConfig from './customer.config';
 export default {
   port: 3000,
   env: '',
@@ -6,4 +7,5 @@ export default {
     port: 27017,
     isDebug: false,
   },
+  ...customerConfig
 }

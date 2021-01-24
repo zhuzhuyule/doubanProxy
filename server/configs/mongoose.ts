@@ -6,14 +6,6 @@ import util from 'util';
 // connect to mongo db
 const mongoUri = config.mongo.host;
 
-mongoose.connect(mongoUri, {
-    keepAlive: true,
-    useCreateIndex: true,
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false,
-});
-
 mongoose.connection.on('connected', function () {    
     console.log('Mongoose connection open to ' + mongoUri);  
 });   
@@ -37,6 +29,10 @@ if (config.mongo.isDebug) {
     });
 }
 
-module.exports = {
-    disconnect: mongoose.disconnect,
-};
+mongoose.connect(mongoUri, {
+    keepAlive: true,
+    useCreateIndex: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+});

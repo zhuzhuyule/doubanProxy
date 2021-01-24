@@ -1,19 +1,20 @@
 import Movie, { MovieType } from '@models/movie.model';
 import tool from '@utils/tool';
+import { FilterQuery } from 'mongoose';
 
-function update (movie: MovieType) {
+function update (movie: MovieType): Promise<MovieType | null> {
   return tool.updateTable({ id: movie.id }, movie, Movie.model);
 }
 
-function findOne (query: any) {
+function findOne (query: FilterQuery<MovieType>): Promise<MovieType | null> {
   return Movie.model.findOne(query).then(formatMovie);
 }
 
-function find(query: any) {
+function find(query: FilterQuery<MovieType>): Promise<any | null> {
   return Movie.model.find(query).then(movies => movies.map(formatMovie));
 }
 
-function findOneById (id: string | number) {
+function findOneById (id: string | number): Promise<MovieType | null> {
   return Movie.model.findOne({ id: parseInt(`${id}`, 10) }).then(formatMovie);
 }
 

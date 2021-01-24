@@ -14,6 +14,7 @@ export interface MovieType {
   ratingPeople?: number,
   betterThan?: string,
   rating?: number,
+  notFound?: boolean,
 }
 
 const Schema = new mongoose.Schema({
@@ -33,6 +34,7 @@ const Schema = new mongoose.Schema({
   ratingPeople: Number,
   betterThan: String,
   rating: Number,
+  notFound: Boolean,
 });
 
 Schema.index({ id: 1 });
