@@ -25,8 +25,8 @@ function match(text = '', reg: RegExp, index = 0): string {
 }
 
 const transferTime = (date?: number | string | null): number => {
-  const time = dayjs(date || '');
-  return time.isValid() ? 0 : parseInt(time.format(DATE_FORMAT.shortInt), 10);
+  const time = dayjs(date || undefined);
+  return time.isValid() ? parseInt(time.format(DATE_FORMAT.shortInt), 10) : 0;
 }
 
 const getDateTime = (date?: string | number): string => {
