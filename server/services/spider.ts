@@ -1,7 +1,7 @@
 import movieCtrl from '@controllers/movie.controller';
 import dynamicMovieCtrl from '@controllers/dynamicMovie.controller';
 import tool from '@utils/tool';
-import { searchMoviesByTag, searchMoviesByType } from './request';
+import { searchMoviesByTag, searchMoviesByType, searchMovie } from './request';
 import { MovieType } from '@models/movie.model';
 
 async function updateTypes(types, level) {
@@ -74,7 +74,7 @@ export async function updateDetailMovies(ids: string[]): Promise<string[]> {
     if (movie) {
       console.log(`The [${idIndex}] "${id}" movie has existed! 《${movie.title}》`);
     } else {
-      movie = await searchMovie(id);
+      movie = await getMovie(id);
       if (movie) {
         failedCount = 0;
         if (movie.notFound) {
@@ -94,7 +94,7 @@ export async function updateDetailMovies(ids: string[]): Promise<string[]> {
   return ids;
 }
 
-async function searchMovie(id: string, isRetry = false): Promise<MovieType | null> {
+async function getMovie(id: string, isRetry = false): Promise<MovieType | null> {
   const movie = await searchMovie(id)
     .then(async (movie) => {
       if (movie && movie.notFound) {
@@ -117,7 +117,7 @@ async function searchMovie(id: string, isRetry = false): Promise<MovieType | nul
       }
       if (!isRetry) {
         console.error(`Try again! Get id:${id} movie`);
-        return await searchMovie(id, true);
+        return await getMovie(id, true);
       }
       return null;
     });

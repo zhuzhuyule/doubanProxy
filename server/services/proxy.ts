@@ -143,13 +143,13 @@ class SunProxy extends Proxy {
     })
     console.log('Get free proxy of everyday request, get message:',res.data.msg);
     if (res.data.code == '1') {
-      return '';
-    } else if (isSecond) {
+      return 'success';
+    } else if (!isSecond) {
       await this.autoLogin();
       return this.requestFreeProxy(true);
     }
     console.error('Get free proxy failed!');
-    return '';
+    return 'failed';
   }
 
   count = async (isSecond = false) => {
@@ -203,15 +203,21 @@ class SunProxy extends Proxy {
   }
 
   getProxy = async (isRetry = false) => {
-    const res = await axios.get<{ code: number; message: string; data: ProxyType[]}>(`http://http.tiqu.alibabaapi.com/getip?num=1&type=2&pack=${config.proxy.packageNum}&port=1&ts=1&lb=1&pb=4&regions=`)
+    const res = await axios.get<{ code: number; msg: string; data: ProxyType[]}>(`http://http.tiqu.alibabaapi.com/getip?num=1&type=2&pack=${config.proxy.packageNum}&port=1&ts=1&lb=1&pb=4&regions=`)
     console.log('get proxy', res?.data?.data);
     // 121 out of ip count
     if (res.data.code === 121) {
+      if (!isRetry) {
+        const status = await this.requestFreeProxy();
+        if (status === 'success') {
+          return await this.getProxy(true);
+        }
+      }
       return null;
     }
     // 113  the ip address is no premission
     if (res.data.code === 113 && !isRetry) {
-      const matchContents = (res.data.message || '').match(/\d+\.\d+\.\d+/)
+      const matchContents = (res.data.msg || '').match(/(\d+\.){3}\d+/)
       const ip = matchContents && matchContents[0] || '';
       const isSuccess = await this.addWhitelist(ip); 
       if (isSuccess) {

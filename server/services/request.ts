@@ -20,7 +20,7 @@ async function request(url: string, options?: AxiosRequestConfig , retryCount = 
   retryCounter[host] = (retryCounter[host] || 0) + 1;
   retryCounter[host] > 1 && console.info(`Use the proxy: "${host}:${port}" retry [${retryCounter[host] - 1}] times`);
   return axios.get(url, {
-    proxy: { host, port: parseInt(port) },
+    // proxy: { host, port: parseInt(port) },
     timeout: 7000 + (retryCounter[host] - 1) * 1000,
     ...options
   })
@@ -200,9 +200,9 @@ export async function searchMovie(movieId: string): Promise<MovieType | null> {
             date: tool.match(info, /日期:([^\n]*)/, 1),
             time: tool.match(info, /片长:([^\n]*)/, 1),
             IMDb: tool.match(info, /IMDb链接:([^\n]*)/, 1),
-            ratingPeople: parseInt($subject.find('.rating_people').text().trim().replace('人评价', ''), 10),
+            ratingPeople: parseInt($subject.find('.rating_people').text().trim().replace('人评价', ''), 10) || 0,
             betterThan: $subject.find('.rating_betterthan').text().replace(/ |\t|\n/g, '').replace(/好于/g, ' '),
-            rating: parseInt($subject.find('.rating_num').text().trim(), 10),
+            rating: parseInt($subject.find('.rating_num').text().trim(), 10) || 0,
             notFound: false,
           }
           return card;
