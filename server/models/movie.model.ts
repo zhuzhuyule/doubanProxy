@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 export interface MovieType {
   id: number,
   title?: string,
+  coverId?: string,
   year?: number,
   alias?: string,
   actor?: string,
@@ -22,6 +23,7 @@ const Schema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  coverId: String,
   title: String,
   year: Number,
   alias: String,

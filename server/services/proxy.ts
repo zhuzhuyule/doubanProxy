@@ -1,17 +1,22 @@
 import config from '@configs/config';
 import proxyCtl from '@controllers/proxy.controller';
 import { ProxyType } from '@models/proxy.model';
-import { DATE_FORMAT } from '@utils/constants';
-import tool from '@utils/tool';
+import { DATE_FORMAT, INVALID_PROXY } from '@utils/constants';
+import { promiseWithTimeout } from '@utils/tool';
 import axios from 'axios-https-proxy-fix';
 import cheerio from 'cheerio';
 import dayjs from 'dayjs';
+import logSymbol from 'log-symbols';
+import { getLogger } from 'log4js';
+const logger = getLogger('proxy');
+
 class Proxy {
   pool: string[]
   maxCount: number;
   proxy?: string;
   history: string[];
   type: 'free' | 'sun';
+  retryCount: number;
 
   constructor() {
     this.maxCount = 10000;
@@ -19,6 +24,7 @@ class Proxy {
     this.proxy = '';
     this.type = 'free';
     this.history = ([] as string[]).concat(this.pool);
+    this.retryCount = 0;
   }
   initialProxyPool = async () => {
     if (!this.pool.length) {
@@ -26,7 +32,7 @@ class Proxy {
         const validAgents = await proxyCtl.getValidProxies(this.type) || [];
         this.pool = validAgents.map(agent => agent?.proxy || '');
       } catch (error) {
-        console.error(error);
+        logger.error(logSymbol.error, error);
       }
     }
   }
@@ -39,27 +45,83 @@ class Proxy {
     return Promise.resolve('');
   }
 
-  hookGet = async (isRetry = false): Promise<string> => {
-    isRetry && console.warn(`Try get proxy again!`);
+  verifyProxy = async (proxy?: string) => {
+    if (!proxy) {
+      this.proxy = '';
+      return '';
+    }
+    const [host, port] = proxy.split(':');
+    logger.info(logSymbol.info,`Verify the proxy: ${proxy} | curl "https://movie.douban.com/subject/1306388/" -x "${proxy}"`);
+    let cancelRequest;
+    const testResponse  = await promiseWithTimeout(20000,
+      axios.get('https://www.baidu.com', { 
+        cancelToken: new axios.CancelToken(cb => cancelRequest = cb),
+        proxy: { host, port: parseInt(port) || 80 },
+        timeout: 10000
+      }))
+      .then(res => {
+        if (res === 'timeout') {
+          cancelRequest();
+          logger.error(logSymbol.error, `Failed`, 403, 'Request time out. [20000]ms');
+          return INVALID_PROXY;
+        }
+        if (res.status > 199 && res.status < 300) {
+          return '';
+        }
+        logger.error(logSymbol.error, `Failed`, res.status, res.statusText);
+        return INVALID_PROXY
+      })
+      .catch(e => {
+        logger.error(logSymbol.error, `Failed`, e.code || e.response?.status, e.message || e.response?.statusText);
+        return INVALID_PROXY
+      });
+      if (testResponse === INVALID_PROXY) {
+        await this.updateInvalidTime(proxy);
+        this.proxy =  '';
+      } else {
+        logger.info(logSymbol.success, proxy);
+        this.proxy = proxy;
+      }
+    return this.proxy;
+  }
+
+  hookGet = async (): Promise<string> => {
+    if (this.retryCount > 10) {
+      this.retryCount = 0;
+      return '';
+    }
+    if (!this.proxy) {
+      this.retryCount = this.retryCount + 1;
+      this.retryCount > 1 && logger.warn(`Try get proxy again![${this.retryCount-1}]`);
+    }
+    
     await this.initialProxyPool();
 
     if (this.proxy) {
-      console.log(`Get old proxy: "${this.proxy}"`);
-      return await Promise.resolve(this.proxy || '')
+      logger.info(`Use old proxy: "${this.proxy}"`);
+      this.retryCount = 0;
+      return this.proxy;
     }
     if (this.pool.length > 0) {
-      this.proxy = this.pool.shift();
-      console.log(`Get new proxy from the pool: "${this.proxy}"`);
-      return await Promise.resolve(this.proxy || '')
+      const proxy = this.pool.shift();
+      logger.info(`Use new proxy from the pool: "${proxy}"`);
+      await this.verifyProxy(proxy);
+      if (this.proxy) {
+        this.retryCount = 0;
+        return this.proxy;
+      } else {
+        return await this.hookGet();
+      }
     }
     if (this.history.length > this.maxCount) {
-      console.warn(`Already used below ${this.maxCount} proxies`);
+      logger.warn(logSymbol.warning, `Already used below ${this.maxCount} proxies`);
       this.printHistory();
-      return await Promise.resolve('')
+      this.retryCount = 0;
+      return ''
     }
     return await this.getProxy()
       .then(async agent => await this.checkProxy(agent))
-      .then(async proxy => (proxy || isRetry) ? proxy : await this.hookGet(true));
+      .then(async proxy => proxy ? proxy : await this.hookGet());
   }
 
   get = async () => {
@@ -85,24 +147,24 @@ class Proxy {
   }
 
   printHistory = () => {
-    console.log('-------------------------------------------------------------------------------------------------------');
-    console.log(`| History prox:`);
+    logger.info('-------------------------------------------------------------------------------------------------------');
+    logger.info(`| History prox:`);
     this.history.map((proxy, index) =>
-      console.log(`| [${index + 1}]  ${proxy} | curl -x "${proxy}" "https://movie.douban.com/subject/1306388/"`));
-    console.log('-------------------------------------------------------------------------------------------------------');
+      logger.info(`| [${index + 1}]  ${proxy} | curl "https://movie.douban.com/subject/1306388/" -x "${proxy}"`));
+    logger.info('-------------------------------------------------------------------------------------------------------');
   }
 
   checkProxy = async (agent?: ProxyType | null) => {
     if (agent) {
-      this.proxy = `${agent.ip}:${agent.port}`;
-      this.history.push(this.proxy);
-      console.log(`Get New Proxy: "${this.proxy}"!`);
+      const proxy = `${agent.ip}:${agent.port}`;
+      this.history.push(proxy);
+      logger.info(`Get New Proxy: "${proxy}"!`);
       this.printHistory();
       await proxyCtl.insert(agent);
-      console.log(`Have saved Proxy: "${this.proxy}"!`);
-      return this.proxy;
+      logger.info(logSymbol.info, `Have saved Proxy: "${proxy}"!`);
+      return await this.verifyProxy(proxy);
     }
-    console.error('empty', agent);
+    logger.warn(logSymbol.warning, 'empty', agent);
     this.printHistory();
     return '';
   }
@@ -121,14 +183,14 @@ class SunProxy extends Proxy {
   }
 
   autoLogin = async () => {
-    console.log('Start login...');
+    logger.warn('Start login...');
     const res = await axios.get<{ code: string; ret_data: string; msg: string }>('http://ty-http-d.hamir.net/index/login/dologin', {
       params: {
         phone: config.proxy.phone,
         password: config.proxy.password
       }
     });
-    console.log('Login sun proxy account, get message:', res.data.msg);
+    logger.info(logSymbol.info, 'Login sun proxy account, get message:', res.data.msg);
     if (res.data.code == '1') {
       this.token = res.data.ret_data;
     }
@@ -141,14 +203,14 @@ class SunProxy extends Proxy {
         'session-id': this.token
       }
     })
-    console.log('Get free proxy of everyday request, get message:',res.data.msg);
+    logger.info('Get free proxy of everyday request, get message:',res.data.msg);
     if (res.data.code == '1') {
       return 'success';
     } else if (!isSecond) {
       await this.autoLogin();
       return this.requestFreeProxy(true);
     }
-    console.error('Get free proxy failed!');
+    logger.error(logSymbol.error, 'Get free proxy failed!');
     return 'failed';
   }
 
@@ -160,13 +222,13 @@ class SunProxy extends Proxy {
     })
     if (res.data.code == '1') {
       const $ = cheerio.load(res.data.ret_data.list || '');
-      console.log($('li').text);
+      logger.info($('li').text);
       return $('span:second').text();
     } else if (isSecond) {
       await this.autoLogin();
       return this.count(true);
     }
-    console.error('Get count failed!');
+    logger.error(logSymbol.error, 'Get count failed!');
     return '';
   }
 
@@ -179,8 +241,7 @@ class SunProxy extends Proxy {
         done = true;
       }
     }
-    tool.log.split('-');
-    console.log(`Get all sun proxy finished`);
+    logger.info(logSymbol.info, `Get all sun proxy finished`);
   }
 
   generateAgent = (agent: any) => {
@@ -197,14 +258,13 @@ class SunProxy extends Proxy {
       const res = await axios.get<{ code: string; success: string }>(`${config.proxy.whitelistUrl}${ip}`)
       return res.data.success;
     } catch (error) {
-      console.error(error);
+      logger.error(logSymbol.error, error);
       return null;
     }
   }
 
   getProxy = async (isRetry = false) => {
     const res = await axios.get<{ code: number; msg: string; data: ProxyType[]}>(`http://http.tiqu.alibabaapi.com/getip?num=1&type=2&pack=${config.proxy.packageNum}&port=1&ts=1&lb=1&pb=4&regions=`)
-    console.log('get proxy', res?.data?.data);
     // 121 out of ip count
     if (res.data.code === 121) {
       if (!isRetry) {
@@ -235,11 +295,11 @@ class FreeProxy extends Proxy {
   }
 
   getProxy = async () => {
-    const res = await axios.get<{ proxy: string }>(`${config.freeProxy.baseUrl}/get`)
+    const res = await axios.get<{ proxy: string }>(`${config.freeProxy.baseUrl}/pop`)
     if (!res.data.proxy) {
-      console.warn(`The free proxy pool is empty, Please retry later!`);
-      console.log(`Remaining Proxy Status：${config.freeProxy.baseUrl}/get_status/`);
-      console.log(`Showing All Free Proxy：${config.freeProxy.baseUrl}/get_all/`);
+      logger.warn(logSymbol.warning, `The free proxy pool is empty, Please retry later!`);
+      logger.info(`Remaining Proxy Status：${config.freeProxy.baseUrl}/get_status/`);
+      logger.info(`Showing All Free Proxy：${config.freeProxy.baseUrl}/get_all/`);
       return null;
     }
     return {
@@ -251,7 +311,7 @@ class FreeProxy extends Proxy {
 
   count = async () => {
     const res = await axios.get<{ count }>(`${config.freeProxy.baseUrl}/get_status`);
-    console.info(`There is ${res.data.count} free proxy!`);
+    logger.mark(logSymbol.info, `There is ${res.data.count} free proxy!`);
     return res.data.count
   }
 
@@ -268,18 +328,19 @@ class FreeProxy extends Proxy {
 export default new class Agent {
   private proxy: Proxy;
   constructor() {
-    this.proxy = new SunProxy();
+    // this.proxy = new SunProxy();
+    this.proxy = new FreeProxy();
   }
 
   getAll = () => {
     return this.proxy.getAll().catch(e => {
-      console.error(e);
+      logger.error(logSymbol.error, e);
     });
   }
 
   getCount = () => {
     return this.proxy.count().catch(e => {
-      console.error(e);
+      logger.error(logSymbol.error, e);
       return ''
     });
   }
@@ -296,14 +357,14 @@ export default new class Agent {
       }
       return '';
     } catch (error) {
-      console.error(error);
+      logger.error(logSymbol.error, error);
       return '';
     }
   }
 
   delete = () => {
     return this.proxy.delete().catch(e => {
-      console.error(e);
+      logger.error(logSymbol.error, e);
       return ''
     });
   }

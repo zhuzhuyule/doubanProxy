@@ -5,7 +5,8 @@
   "main": "./server",
   "scripts": {
     "start": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/index.ts",
-    "start:test": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/test.ts",
+    "start:test": "ts-node -r tsconfig-paths/register ./server/test.ts",
+    "start:test:watch": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/test.ts",
     "test": "test"
   },
   "keywords": [
@@ -21,6 +22,8 @@
     "dayjs": "^1.10.3",
     "debug": "^4.3.1",
     "express": "^4.17.1",
+    "log-symbols": "^4.0.0",
+    "log4js": "^6.3.0",
     "mongoose": "^5.11.12"
   },
   "devDependencies": {

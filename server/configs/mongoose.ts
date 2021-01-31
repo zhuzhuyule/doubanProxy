@@ -2,20 +2,22 @@ import config from './config';
 import debug from 'debug';
 import mongoose from 'mongoose';
 import util from 'util';
+import { getLogger } from '@utils/logger';
 
+const logger = getLogger('mongodb');
 // connect to mongo db
 const mongoUri = config.mongo.host;
 
 mongoose.connection.on('connected', function () {    
-    console.log('Mongoose connection open to ' + mongoUri);  
+    logger.info('Mongoose connection open to ' + mongoUri);  
 });   
 
 mongoose.connection.on('error', () => {
-    throw new Error(`unable to connect to database: ${mongoUri}`);
+    logger.fatal(`unable to connect to database: ${mongoUri}`);
 });
 
 mongoose.connection.on('disconnected', function () {    
-    console.log('Mongoose connection disconnected');  
+    logger.warn('Mongoose connection disconnected');  
 });
 
 // print mongoose logs in dev env

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 export interface DynamicMovieType {
   id: number,
+  coverId?: string,
   rating: string,
   title: string,
   tags?: [string],
@@ -15,6 +16,7 @@ export interface DynamicMovieType {
 const Schema = new mongoose.Schema({
   id: Number,
   rating: String,
+  coverId: String,
   title: String,
   tags: Array,
   types: Array,

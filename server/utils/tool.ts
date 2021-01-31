@@ -11,7 +11,7 @@ async function updateTable<T>(query: any, document: any, model: mongoose.Model<m
 
 // size: 's' | 'n'
 // eg link: https://img3.doubanio.com/view/photo/n_ratio_poster/public/p451885601.jpg
-function getCoverLink(id: number, size = 's'): string {
+function getCoverLink(id: number | string, size = 's'): string {
   return `https://img3.doubanio.com/view/photo/${size}_ratio_poster/public/${id}.jpg`
 }
 
@@ -36,19 +36,76 @@ const getDateTime = (date?: string | number): string => {
   return '';
 }
 
+const getRealLength = ( str: string ): number => {  
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/[^\x00-\xff]/g, '__').length; 
+}  
 
-const log = {
-  split: (sign = '*'): void => console.log(`[${new Date().toTimeString().slice(0, 8)}]` + `${sign}`.repeat(120 / `${sign}`.length)),
+const calcProcess = (current = 0, total = 1): string => {
+  if (total < 1) {
+    return ''
+  }
+  return `${(current/total * 100).toFixed(2)}%`
 }
 
-export default {
+const promiseWithTimeout = <T>(time: number, promise: Promise<T>): Promise<T | 'timeout'> => {
+  let handle;
+  const timePromise = new Promise<'timeout'>(reslove => {
+    handle = setTimeout(() => {
+      reslove('timeout');
+    }, time)
+  })
+
+  return Promise.race<Promise<T | 'timeout'>>([promise, timePromise]).then(result => {
+    clearTimeout(handle);
+    return result;
+  })
+}
+
+export {
   updateTable,
-  douban: {
-    getCoverLink,
-    getCoverImageId,
-  },
+  getCoverLink,
+  getCoverImageId,
   match,
   getDateTime,
   transferTime,
-  log,
+  promiseWithTimeout,
+  similarity,
+  calcProcess,
+  getRealLength,
+}
+
+function similarity(str1: string, str2: string): number {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const diff = new Array(len1 + 1);
+
+  let i, j;
+  for (i = 0; i < len1 + 1; i++) {
+      diff[i] = new Array(len2 + 1);
+      diff[i][0] = i;
+  }
+  for (i = 0; i < len2 + 1; i++) {
+      diff[0][i] = i;
+  }
+
+  let temp;
+  for (i = 1; i <= len1; i++) {
+      for (j = 1; j <= len2; j++) {
+          if (str1[i - 1] == str2[j - 1]) {
+              temp = 0;
+          } else {
+              temp = 1;
+          }
+          const temp1 = diff[i - 1][j - 1] + temp;
+          const temp2 = diff[i][j - 1] + 1;
+          const temp3 = diff[i - 1][j] + 1;
+
+          diff[i][j] = [temp1, temp2, temp3].reduce(
+              (min, num) => (num > min ? min : num),
+              1000
+          );
+      }
+  }
+  return 1 - diff[len1][len2] / Math.max(len1, len2);
 }

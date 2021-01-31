@@ -1,9 +1,9 @@
 import Movie, { MovieType } from '@models/movie.model';
-import tool from '@utils/tool';
+import { updateTable } from '@utils/tool';
 import { FilterQuery } from 'mongoose';
 
 function update (movie: MovieType): Promise<MovieType | null> {
-  return tool.updateTable({ id: movie.id }, movie, Movie.model);
+  return updateTable({ id: movie.id }, movie, Movie.model);
 }
 
 function findOne (query: FilterQuery<MovieType>): Promise<MovieType | null> {
@@ -22,6 +22,7 @@ function formatMovie(movie: MovieType | null) {
   return movie && {
     id: movie.id,
     title: movie.title,
+    coverId: movie.coverId,
     year: movie.year,
     alias: movie.alias,
     actor: movie.actor,
