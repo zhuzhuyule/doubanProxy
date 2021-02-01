@@ -80,7 +80,7 @@ const baseConfig = {
         enableCallStack: true,
       },
       test: {
-        appenders: ['console', 'test', 'everything'],
+        appenders: ['console', 'test'],
         level: 'trace',
         enableCallStack: true,
       },

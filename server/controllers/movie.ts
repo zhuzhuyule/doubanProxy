@@ -1,4 +1,4 @@
-import Movie, { MovieType } from '@models/movie.model';
+import Movie, { MovieType } from '@models/movie';
 import { updateTable } from '@utils/tool';
 import { FilterQuery } from 'mongoose';
 

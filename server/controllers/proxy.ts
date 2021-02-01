@@ -1,4 +1,4 @@
-import Proxy, { ProxyType } from '@models/proxy.model';
+import Proxy, { ProxyType } from '@models/proxy';
 import { DATE_FORMAT } from '@utils/constants';
 import { getDateTime, transferTime, updateTable } from '@utils/tool';
 import dayjs from 'dayjs';
@@ -28,7 +28,6 @@ async function updateUseCount (proxy: string): Promise<{_: string}> {
 
 async function updateInvalidTime (proxy: string): Promise<{_: string}> {
   const time = parseInt(dayjs().format(DATE_FORMAT.shortInt), 10);
-  logger.info(`update ${proxy} InvalidTime:`, time);
   return await update(proxy, { invalidTime: time });
 }
 

@@ -1,10 +1,10 @@
 import logSymbol from 'log-symbols';
-import movieCtrl from '@controllers/movie.controller';
-import dynamicMovieCtrl from '@controllers/dynamicMovie.controller';
+import movieCtrl from '@controllers/movie';
+import dynamicMovieCtrl from '@controllers/dynamicMovie';
 import { calcProcess, getCoverImageId, transferTime } from '@utils/tool';
 import { searchMoviesByTag, searchMoviesByType, searchMovie, selectMoviesByType } from './request';
-import { MovieType } from '@models/movie.model';
-import { DynamicMovieType } from '@models/dynamicMovie.model';
+import { MovieType } from '@models/movie';
+import { DynamicMovieType } from '@models/dynamicMovie';
 import { getLogger } from '@utils/logger';
 
 const logger = getLogger();

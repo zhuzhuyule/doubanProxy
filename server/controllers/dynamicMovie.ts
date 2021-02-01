@@ -1,4 +1,4 @@
-import DynamicMovie, { DynamicMovieType } from '@models/dynamicMovie.model';
+import DynamicMovie, { DynamicMovieType } from '@models/dynamicMovie';
 import { updateTable } from '@utils/tool';
 
 async function update(movie: DynamicMovieType & { tag?: string}): Promise<DynamicMovieType | null> {

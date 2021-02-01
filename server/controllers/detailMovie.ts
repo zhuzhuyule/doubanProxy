@@ -1,4 +1,4 @@
-import DetailMovie, { DetailMovieType } from '@models/detailMovie.model';
+import DetailMovie, { DetailMovieType } from '@models/detailMovie';
 import { updateTable } from '@utils/tool';
 import { FilterQuery } from 'mongoose';
 

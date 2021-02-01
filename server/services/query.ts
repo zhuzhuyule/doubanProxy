@@ -1,7 +1,7 @@
-import detailMovieController from '@controllers/detailMovie.controller';
-import movieCtrl from '@controllers/movie.controller';
-import proxyCtrl from '@controllers/proxy.controller';
-import { DetailMovieType } from '@models/detailMovie.model';
+import detailMovieController from '@controllers/detailMovie';
+import movieCtrl from '@controllers/movie';
+import proxyCtrl from '@controllers/proxy';
+import { DetailMovieType } from '@models/detailMovie';
 import { getCoverLink, similarity } from '@utils/tool';
 import express from 'express';
 import { getLogger } from 'log4js';

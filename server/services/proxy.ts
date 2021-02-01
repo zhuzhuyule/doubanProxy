@@ -1,6 +1,6 @@
 import config from '@configs/config';
-import proxyCtl from '@controllers/proxy.controller';
-import { ProxyType } from '@models/proxy.model';
+import proxyCtl from '@controllers/proxy';
+import { ProxyType } from '@models/proxy';
 import { DATE_FORMAT, INVALID_PROXY } from '@utils/constants';
 import { promiseWithTimeout } from '@utils/tool';
 import axios from 'axios-https-proxy-fix';
@@ -54,7 +54,7 @@ class Proxy {
     logger.info(logSymbol.info,`Verify the proxy: ${proxy} | curl "https://movie.douban.com/subject/1306388/" -x "${proxy}"`);
     let cancelRequest;
     const testResponse  = await promiseWithTimeout(20000,
-      axios.get('https://www.baidu.com', { 
+      axios.get('https://movie.douban.com/', { 
         cancelToken: new axios.CancelToken(cb => cancelRequest = cb),
         proxy: { host, port: parseInt(port) || 80 },
         timeout: 10000

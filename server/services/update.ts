@@ -1,7 +1,7 @@
-import detailMovieCtl from '@controllers/detailMovie.controller';
-import dynamicMovieCtrl from '@controllers/dynamicMovie.controller';
-import movieCtrl from '@controllers/movie.controller';
-import { MovieType } from '@models/movie.model';
+import detailMovieCtl from '@controllers/detailMovie';
+import dynamicMovieCtrl from '@controllers/dynamicMovie';
+import movieCtrl from '@controllers/movie';
+import { MovieType } from '@models/movie';
 import { transferTime } from '@utils/tool';
 import { Request, Response } from 'express';
 import proxy from './proxy';
