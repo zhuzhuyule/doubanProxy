@@ -34,7 +34,7 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
       timeout: 7000 + (retryCounter[host] - 1) * 2000,
       ...options
     }))
-    .then(response => {
+    .then(async response => {
       if (response === 'timeout') {
         cancelRequest();
         throw { status: 500, message: `Request time out. [${options?.timeout || 7000 + (retryCounter[host] - 1) * 2000 + 1000}]ms` }
@@ -47,6 +47,16 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
         logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`);
         logger.error(logSymbol.error, `Response Data: ${JSON.stringify(response.data)}`);
         throw { status: 500, message: JSON.stringify(response.data) };
+      } if (response.status === 200 && `${response.data.msg || response.data?.toString()}`.indexOf('检测到有异常请求') > -1) {
+        logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`);
+        logger.error(logSymbol.error, `${response.data.msg || response.data?.toString()}`);
+        await proxy.delete();
+        delete retryCounter[host];
+        if (retryCount === (MAX_RETRY + 1)) {
+          logger.error(logSymbol.error, `The maximum number of proxy requests exceeded`);
+          throw { status: 500, message: 'The maximum number of proxy requests exceeded' }
+        }
+        return await request(url, options, retryCount + 1);
       } else {
         delete retryCounter[host];
         return response;
@@ -113,9 +123,6 @@ export async function selectMoviesByType(tag: string, start = 0, pageCount = 800
     .then(response => {
       if (response.status === 200 && response.data && !response.data.msg) {
         logger.info(logSymbol.success, `Success: 获取"${tag}"电影"${response.data?.data?.length}"部！`);
-        if (!response.data?.data?.length) {
-          logger.info('info', response);
-        }
         return response.data.data;
       }
       logger.error(logSymbol.error, `Failed! Gets '${tag}' tag movie failed！| error status: ${response.status} ${response.statusText || response.message} | ${response.data.msg}`,);
@@ -135,7 +142,7 @@ const RATING_RANGE = ['100:90', '90:80', '80:70', '70:60', '60:50', '50:40', '40
  * @param {number} page default: 1
  * @param {number} pageCount default: 800 (max 500)
  */
-export async function searchMoviesByType(type: keyof typeof MOVIE_TYPES, rangeLevel = 0, page = 1, pageCount = 800): Promise<[DynamicMovieType & { score: string, cover_url?: string }]> {
+export async function searchMoviesByType(type: string, rangeLevel = 0, page = 1, pageCount = 800): Promise<[DynamicMovieType & { score: string, cover_url?: string }]> {
   return await request('https://movie.douban.com/j/chart/top_list', {
     params: {
       type: MOVIE_TYPES[type] || 17,

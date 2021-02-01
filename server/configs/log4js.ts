@@ -1,5 +1,5 @@
 import { DEFAULT_SIGN, LOG_CONTEXT_KEYS } from '@utils/constants';
-import { loggerContext, LoggingEvent } from '@utils/logger';
+import { getGlobalContext, LoggingEvent } from '@utils/logger';
 
 const tokens = {
   [LOG_CONTEXT_KEYS.file]: (logEvent: { fileName: string, lineNumber: number }): string => {
@@ -7,7 +7,7 @@ const tokens = {
     return file && `${file.groups?.name||''}` || ''
   },
   [LOG_CONTEXT_KEYS.operate]: (logEvent: LoggingEvent): string => {
-    const operateValue = logEvent.context[LOG_CONTEXT_KEYS.operate] === undefined ? loggerContext.get(LOG_CONTEXT_KEYS.operate) : logEvent.context[LOG_CONTEXT_KEYS.operate];
+    const operateValue = logEvent.context[LOG_CONTEXT_KEYS.operate] === undefined ? getGlobalContext(LOG_CONTEXT_KEYS.operate) : logEvent.context[LOG_CONTEXT_KEYS.operate];
     if (operateValue) {
       return `${DEFAULT_SIGN.repeat(operateValue.__deep || 0)} ${operateValue.prefix || ''}`;
     }

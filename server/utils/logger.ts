@@ -1,9 +1,10 @@
-import { DEFAULT_TITLE_SIGN } from './constants';
+import { getLogger as getLogger4js, Logger } from 'log4js';
+import { DEFAULT_TITLE_SIGN, LOG_CONTEXT_KEYS } from './constants';
 import { getRealLength } from './tool';
 
 export * from 'log4js';
 
-class AllContext {
+class GlobalContext {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private store: { [k: string]: Array<any>};
   constructor() {
@@ -47,7 +48,44 @@ class AllContext {
   }
 }
 
-export const loggerContext = new AllContext();
+const globalContext = new GlobalContext();
+
+type NewLogger = {
+  // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-explicit-any
+  addGlobalContext: (title?: string, contextKey?: string, contextValue?: any) => void;
+  // eslint-disable-next-line no-unused-vars
+  removeGlobalContext: (contextKey?: string) => void;
+  clearGlobalContext: () => void;
+} & Logger;
+
+const getLogger = (category?: string): NewLogger => {
+  const logger = getLogger4js(category);
+
+  Object.defineProperties(logger, {
+    addGlobalContext: {
+      value: (title = '', contextKey = LOG_CONTEXT_KEYS.operate, contextValue = {}) => {
+        const formatTitle = globalContext.addContext(contextKey, contextValue);
+        logger.trace(title && formatTitle(title));
+      },
+    },
+    removeGlobalContext: {
+      value: globalContext.removeContext,
+    },
+    clearGlobalContext: {
+      value: globalContext.cleanContext,
+    },
+  })
+
+  return logger as NewLogger;
+}
+
+const getGlobalContext = (contextKey: string): unknown => globalContext.get(contextKey);
+
+
+export {
+  getLogger,
+  getGlobalContext,
+}
 
 
 

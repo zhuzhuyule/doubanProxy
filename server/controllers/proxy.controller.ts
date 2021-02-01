@@ -6,13 +6,12 @@ import { getLogger } from 'log4js';
 const logger = getLogger('proxy.controller');
 
 async function insert (agent: ProxyType): Promise<void | ProxyType | null> {
-  logger.info('expire_time:', transferTime(agent.expire_time));
   return await updateTable(
      { ip: agent.ip, port: agent.port },
      { ...agent, expire_time: transferTime(agent.expire_time), useCount: 0, invalidTime: 0 },
       Proxy.model
     )
-    .catch(e => logger.info(e));
+    .catch(e => logger.error(e));
 }
 
 async function update (proxy: string, doc = {}, inc = {}) {
@@ -20,7 +19,7 @@ async function update (proxy: string, doc = {}, inc = {}) {
   return await Proxy.model.updateOne({ ip: agent.ip, port: agent.port }, {
     $set: doc,
     $inc: inc
-  }, { upsert: true }).catch((e: unknown) => logger.info(e));
+  }, { upsert: true }).catch((e: unknown) => logger.error(e));
 }
 
 async function updateUseCount (proxy: string): Promise<{_: string}> {
@@ -39,7 +38,7 @@ async function getValidProxies(type: 'sun' | 'free', count  = 10) {
     .limit(count)
     .then(agents => agents?.map(formatProxy))
     .catch(e => {
-      logger.info(e);
+      logger.error(e);
       return null;
     })
 }
@@ -52,7 +51,7 @@ async function getProxies({ type = 'free', top = 10, hour = 0, min = 0, baseDate
     .sort({ id: 1 })
     .then(agents => agents?.map(formatProxy))
     .catch(e => {
-      logger.info(e);
+      logger.error(e);
       return null;
     })
 }
