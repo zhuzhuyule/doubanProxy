@@ -12,6 +12,7 @@ const logger = getLogger();
 const LEVEL_MOVIE_TYPES = ['科幻', '剧情', '喜剧', '动作', '爱情', '动画', '悬疑', '惊悚', '恐怖', '纪录片', '短片', '情色', '同性', '音乐', '歌舞', '家庭', '儿童', '传记', '历史', '战争', '犯罪', '西部', '奇幻', '冒险', '灾难', '武侠', '古装', '运动', '黑色电影'];
 async function updateAccordingTypesAndLevel(types = LEVEL_MOVIE_TYPES) {
   try {
+    logger.clearGlobalContext();
     for (let level = 0; level < 10; level++) {
       for (let typeIndex = 0, len = types.length; typeIndex < len; typeIndex++) {
         const type = types[typeIndex];
@@ -29,8 +30,7 @@ async function updateAccordingTypesAndLevel(types = LEVEL_MOVIE_TYPES) {
             });
           }
         }
-        logger.trace(`End getting "${type}" type movie`);
-        logger.removeGlobalContext();
+        logger.removeGlobalContext(`End getting "${type}" type movie`);
       }
     }
   } catch (e) {
@@ -46,6 +46,7 @@ async function updateAccordingTypesAndLevel(types = LEVEL_MOVIE_TYPES) {
 const NEW_MOVIE_TAGS = ["科幻", "喜剧", "奇幻", "冒险", "灾难", "动作", "武侠", "爱情", "动画", "悬疑", "惊悚", "恐怖", "剧情", "犯罪", "同性", "音乐", "歌舞", "传记", "历史", "战争", "西部", "情色"]
 async function updateNewTags(tags = NEW_MOVIE_TAGS) {
   try {
+    logger.clearGlobalContext();
     for (let tagIndex = 0, len = tags.length; tagIndex < len; tagIndex++) {
       const tag = tags[tagIndex];
       logger.addGlobalContext(`Update "${tag}" tag movie | ${calcProcess(tagIndex, len)}`)
@@ -71,8 +72,7 @@ async function updateNewTags(tags = NEW_MOVIE_TAGS) {
         }
       } while (movies.length > 0);
       
-      logger.info(`End getting "${tag}" tag movie`);
-      logger.removeGlobalContext();
+      logger.removeGlobalContext(`End getting "${tag}" type movie`);
     }
   } catch (e) {
     logger.error(logSymbol.error, `Sorry! Find some errors, The operate will done`);
@@ -86,6 +86,7 @@ async function updateNewTags(tags = NEW_MOVIE_TAGS) {
 const NORMAL_MOVIE_TYPES = ['热门', '最新', '经典', '可播放', '豆瓣高分', '冷门佳片', '华语', '欧美', '韩国', '日本', '动作', '喜剧', '爱情', '科幻', '悬疑', '恐怖', '文艺'];
 async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
   try {
+    logger.clearGlobalContext();
     for (let tagIndex = 0, len = tags.length; tagIndex < len; tagIndex++) {
       const tag = tags[tagIndex];
       logger.addGlobalContext(`Update "${tag}" tag movie | ${calcProcess(tagIndex, len)}`)
@@ -100,8 +101,7 @@ async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
           });
         }
       }
-      logger.info(`End getting "${tag}" tag movie`);
-      logger.removeGlobalContext();
+      logger.removeGlobalContext(`End getting "${tag}" tag movie`);
     }
   } catch (e) {
     logger.error(logSymbol.error, `Sorry! Find some errors, The operate will done`);
@@ -115,6 +115,7 @@ async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
 export async function updateDetailMovies(ids: string[]): Promise<string[]> {
   let failedCount = 0;
   let skipCount = 0;
+  logger.clearGlobalContext();
   logger.addGlobalContext('Start update detail movies');
   for (let idIndex = 0; idIndex < ids.length; idIndex++) {
     const id = ids[idIndex];
@@ -146,13 +147,13 @@ export async function updateDetailMovies(ids: string[]): Promise<string[]> {
           throw new Error('There is a problem with the network and try again later！');
         }
       }
-      logger.removeGlobalContext();
+      logger.removeGlobalContext(`End get the [id: ${id}] ${movie && `《${movie.title}》`}`);
     }
   }
   if (skipCount !== 0) {
     logger.info(`Has skiped "${skipCount}" existed movies! [current index: ${ids.length}]`);
   }
-  logger.removeGlobalContext();
+  logger.removeGlobalContext('End update detail movies');
   return ids;
 }
 

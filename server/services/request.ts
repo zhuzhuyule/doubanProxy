@@ -1,9 +1,9 @@
-import { MovieType } from '@models/movie.model';
+import { MovieType } from '@models/movie';
 import axios, { AxiosRequestConfig } from 'axios-https-proxy-fix';
 import { getCoverImageId, match, promiseWithTimeout } from '@utils/tool';
 import proxy from './proxy';
 import cheerio from 'cheerio';
-import { DynamicMovieType } from '@models/dynamicMovie.model';
+import { DynamicMovieType } from '@models/dynamicMovie';
 import logSymbol from 'log-symbols';
 
 import { getLogger } from 'log4js';
@@ -17,7 +17,7 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
     logger.warn(`Totally retry [${retryCount - 1}] times!`);
   }
   const params = options && options.params;
-  logger.info(`Request URL: ${url}${params ? '?' + JSON.stringify(params).replace(/[{}"]/g, '').replace(/:/g, '=').replace(/,/g, '&') : ''}`);
+  logger.info(`Request URL: ${url}${params ? '?' + Object.entries<string>(params).map(param => (param.join('='))).join('&') : ''}`);
   const [host, port] = (await proxy.get()).split(':');
   if (!host || !port) {
     throw { status: '500', message: 'Get empty proxy' };
@@ -67,11 +67,10 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
         logger.error(logSymbol.error, `Not Found Page:`, e.response.status, `${url}${params ? '?' + JSON.stringify(params).replace(/[{}"]/g, '').replace(/:/g, '=').replace(/,/g, '&') : ''}`);
         return { status: e.response.status, message: 'Not Found Page' }
       }
-      logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`);
       if (e.code || (e.response && e.response.status)) {
-        logger.error(logSymbol.error, `Error Code: ${e.code || (e.response && e.response.status)}`, e.message || '');
+        logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`, `Error Code: ${e.code || (e.response && e.response.status)}`, e.message || '');
       } else {
-        logger.error(logSymbol.error, e);
+        logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`, e);
       }
       if (retryCounter[host] === NUMBER_OF_RETRY) {
         await proxy.delete();

@@ -1,3 +1,4 @@
+import logSymbol from 'log-symbols';
 import { getLogger as getLogger4js, Logger } from 'log4js';
 import { DEFAULT_TITLE_SIGN, LOG_CONTEXT_KEYS } from './constants';
 import { getRealLength } from './tool';
@@ -39,12 +40,12 @@ class GlobalContext {
     this.store = {};
   }
 
-  formatTitle(key: string, title: string) {
+  formatTitle(key: string, title: string, sign = DEFAULT_TITLE_SIGN) {
     const context = this.get(key);
     const len = getRealLength(title);
     const leftLen = 50 - Math.round(len/2) - context?.__deep || 0;
     const rightLen = 50 - Math.floor(len/2);
-    return `${DEFAULT_TITLE_SIGN.repeat(leftLen)}${title}${DEFAULT_TITLE_SIGN.repeat(rightLen)}`;
+    return `${sign.repeat(leftLen)}${title}${sign.repeat(rightLen)}`;
   }
 }
 
@@ -54,7 +55,7 @@ type NewLogger = {
   // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-explicit-any
   addGlobalContext: (title?: string, contextKey?: string, contextValue?: any) => void;
   // eslint-disable-next-line no-unused-vars
-  removeGlobalContext: (contextKey?: string) => void;
+  removeGlobalContext: (endMsg?: string, contextKey?: string) => void;
   clearGlobalContext: () => void;
 } & Logger;
 
@@ -69,7 +70,10 @@ const getLogger = (category?: string): NewLogger => {
       },
     },
     removeGlobalContext: {
-      value: globalContext.removeContext,
+      value: (endMsg = '', contextKey = LOG_CONTEXT_KEYS.operate) => {
+        logger.trace(`[END]${logSymbol.info}`, endMsg);
+        globalContext.removeContext(contextKey)
+      },
     },
     clearGlobalContext: {
       value: globalContext.cleanContext,
