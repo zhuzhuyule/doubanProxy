@@ -4,6 +4,12 @@ import { DATE_FORMAT } from './constants';
 
 export type TypeOmit<T, k> = Pick<T, Exclude<keyof T, k>>;
 
+
+const ULR_LIST = ['https://movie.douban.com/subject', 'https://movie.douban.com/j/subject_suggest', 'https://movie.douban.com/j/search_subjects', 'https://movie.douban.com/j/new_search_subjects','https://movie.douban.com/j/chart/top_list'];
+function getUrlIdentity(url: string): string {
+  return ((ULR_LIST.find(identity => url.startsWith(identity)) || '').match(/([\w_]+)$/) || [''])[0];
+}
+
 async function updateTable<T>(query: any, document: any, model: mongoose.Model<mongoose.Document & T>): Promise<T | null> {
   const options = { upsert: true, new: true, setDefaultsOnInsert: true };
   return await model.findOneAndUpdate(query, document, options);
@@ -72,6 +78,7 @@ export {
   promiseWithTimeout,
   similarity,
   calcProcess,
+  getUrlIdentity,
   getRealLength,
 }
 

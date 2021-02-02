@@ -4,13 +4,7 @@ import movieCtrl from '@controllers/movie';
 import { MovieType } from '@models/movie';
 import { transferTime } from '@utils/tool';
 import { Request, Response } from 'express';
-import proxy from './proxy';
 import { updateAll, updateDynamicMovies } from './spider';
-
-export async function updateProxies(_: Request, res: Response): Promise<void> {
-  await proxy.getAll();
-  res.send('Running get all command!')
-}
 
 export function updateMovies(req: Request<{ mode: 'tag' | 'type' }>, res: Response): void  {
   updateDynamicMovies(req.params.mode);
@@ -23,12 +17,9 @@ export async function updateDetail(_: Request<{ mode: 'tag' | 'type' }>, res: Re
   updateAll();
 }
 
-
-
 export async function mergeDynamicMovie(): Promise<void>  {
   const movies = await dynamicMovieCtrl.getAll();
-  movies && movies.map(async (movie, index) => {
-    // tool.log.split('*', `${index} | ${(index/movies.length * 100).toFixed(2)}%`)
+  movies && movies.map(async (movie) => {
     return movie && await detailMovieCtl.update({
       ...movie,
       voteCount: movie.vote_count,
@@ -39,8 +30,7 @@ export async function mergeDynamicMovie(): Promise<void>  {
 }
 export async function mergeMovie(): Promise<void>  {
   const movies = await movieCtrl.find({});
-  movies && movies.map(async (movie: MovieType, index) => {
-    // tool.log.split('*', `${index} | ${(index/movies.length * 100).toFixed(2)}%`)
+  movies && movies.map(async (movie: MovieType) => {
     const dynamicMovie = await dynamicMovieCtrl.get(movie.id);
     const movieIsLatest = movie.ratingPeople && (!dynamicMovie?.vote_count || (dynamicMovie.vote_count > movie.ratingPeople));
     const title = [dynamicMovie?.title || ''].concat((movie.title || '')?.replace(new RegExp(dynamicMovie?.title || ''), '').trim().replace(/\(\d+\)$/, ''));

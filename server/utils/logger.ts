@@ -102,7 +102,7 @@ const getLogger = (category?: string): NewLogger => {
         try {
           await next();
         } catch (error) {
-          logger.error(`Find some error: ${error}`);
+          logger.error(`Find some error: `, error);
           isSuccess = false;
         } finally  {
           logger.trace(`[END]${logSymbol.info}`, endMsg);

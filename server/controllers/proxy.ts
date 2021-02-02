@@ -1,53 +1,52 @@
 import Proxy, { ProxyType } from '@models/proxy';
-import { DATE_FORMAT } from '@utils/constants';
 import { getDateTime, transferTime, updateTable } from '@utils/tool';
-import dayjs from 'dayjs';
 import { getLogger } from 'log4js';
+
 const logger = getLogger('proxy.controller');
 
-async function insert (agent: ProxyType): Promise<void | ProxyType | null> {
+async function insert(agent: ProxyType): Promise<void | ProxyType | null> {
   return await updateTable(
-     { ip: agent.ip, port: agent.port },
-     { ...agent, expire_time: transferTime(agent.expire_time), useCount: 0, invalidTime: 0 },
-      Proxy.model
-    )
+    { ip: agent.ip, port: agent.port },
+    { ip: agent.ip, port: agent.port, expire_time: transferTime(agent.expire_time), useCount: 0, invalidOperates: [] },
+    Proxy.model
+  )
     .catch(e => logger.error(e));
 }
 
-async function update (proxy: string, doc = {}, inc = {}) {
+async function update(proxy: string, doc = {}, inc = {}, operate?: string) {
   const agent = { ip: proxy.split(':')[0], port: proxy.split(':')[1] };
+
   return await Proxy.model.updateOne({ ip: agent.ip, port: agent.port }, {
-    $set: doc,
-    $inc: inc
+    $set: {
+      ip: agent.ip,
+      port: agent.port,
+      ...doc,
+    },
+    $inc: inc,
+    $addToSet: {
+      ...(operate && { invalidOperates: { $each: [operate] } })
+    }
   }, { upsert: true }).catch((e: unknown) => logger.error(e));
 }
 
-async function updateUseCount (proxy: string): Promise<{_: string}> {
-  return await update(proxy, {}, { useCount: 1 });
+async function updateUseCount(proxy: string): Promise<void> {
+  await update(proxy, {}, { useCount: 1 });
 }
 
-async function updateInvalidTime (proxy: string): Promise<{_: string}> {
-  const time = parseInt(dayjs().format(DATE_FORMAT.shortInt), 10);
-  return await update(proxy, { invalidTime: time });
+async function updateInvalidOperate(proxy: string, operate: string): Promise<void> {
+  await update(proxy, {}, {}, operate);
 }
 
-async function getValidProxies(type: 'sun' | 'free', count  = 10) {
-  return await Proxy.model.find({ type, invalidTime: 0 })
+async function deleteProxy(proxy?: string): Promise<void> {
+  if (proxy) {
+    const agent = { ip: proxy.split(':')[0], port: proxy.split(':')[1] };
+    Proxy.model.deleteOne({ ip: agent.ip, port: agent.port }).catch();
+  }
+}
+
+async function getValidProxies(operate: string): Promise<Array<{ proxy: string; type: string; ip: string; port: string; expire_time: string; useCount?: number } | null> | null> {
+  return await Proxy.model.find({ invalidOperates: { $ne: operate } })
     .sort({ expire_time: 1 })
-    .limit(count)
-    .then(agents => agents?.map(formatProxy))
-    .catch(e => {
-      logger.error(e);
-      return null;
-    })
-}
-
-async function getProxies({ type = 'free', top = 10, hour = 0, min = 0, baseDate = '' }) {
-  const time = parseInt(dayjs(baseDate || undefined).hour(-hour).minute(-min).format(DATE_FORMAT.shortInt), 10);
-  return await Proxy.model.find({ type, expire_time: { $gt: time }})
-    .sort({ _id: -1 })
-    .limit(top)
-    .sort({ id: 1 })
     .then(agents => agents?.map(formatProxy))
     .catch(e => {
       logger.error(e);
@@ -56,21 +55,20 @@ async function getProxies({ type = 'free', top = 10, hour = 0, min = 0, baseDate
 }
 
 function formatProxy(agent: ProxyType | null) {
-    return agent && {
-      proxy: `${agent.ip}:${agent.port}`,
-      type: agent.type,
-      useCount: agent.useCount,
-      ip: agent.ip,
-      port: agent.port,
-      expire_time: getDateTime(agent.expire_time),
-      invalidTime: getDateTime(agent.invalidTime),
-    }
-} 
+  return agent && {
+    proxy: `${agent.ip}:${agent.port}`,
+    type: agent.type,
+    useCount: agent.useCount,
+    ip: agent.ip,
+    port: agent.port,
+    expire_time: getDateTime(agent.expire_time),
+  }
+}
 
 export default {
   insert,
-  updateInvalidTime,
+  delete: deleteProxy,
+  updateInvalidOperate,
   updateUseCount,
-  getProxies,
   getValidProxies,
 };

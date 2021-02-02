@@ -11,14 +11,16 @@ const logger = getLogger('request');
 
 const NUMBER_OF_RETRY = 4;
 const MAX_RETRY = 600;
-const retryCounter: { [_ in string]: number } = {};
+const retryCounter: { [key: string]: number } = {};
 async function request(url: string, options?: AxiosRequestConfig, retryCount = 1): Promise<any> {
   if (retryCount > 1) {
     logger.warn(`Totally retry [${retryCount - 1}] times!`);
   }
   const params = options && options.params;
   logger.info(`Request URL: ${url}${params ? '?' + Object.entries<string>(params).map(param => (param.join('='))).join('&') : ''}`);
-  const [host, port] = (await proxy.get()).split(':');
+
+  const validProxy = await proxy.get(url);
+  const [host, port] = validProxy.split(':');
   if (!host || !port) {
     throw { status: '500', message: 'Get empty proxy' };
   }
@@ -50,7 +52,7 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
       } if (response.status === 200 && `${response.data.msg || response.data?.toString()}`.indexOf('检测到有异常请求') > -1) {
         logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`);
         logger.error(logSymbol.error, `${response.data.msg || response.data?.toString()}`);
-        await proxy.delete();
+        await proxy.invalidForUrl(validProxy, url);
         delete retryCounter[host];
         if (retryCount === (MAX_RETRY + 1)) {
           logger.error(logSymbol.error, `The maximum number of proxy requests exceeded`);
@@ -73,7 +75,7 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
         logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`, e);
       }
       if (retryCounter[host] === NUMBER_OF_RETRY) {
-        await proxy.delete();
+        await proxy.invalidForUrl(validProxy, url);
         delete retryCounter[host];
       }
       if (retryCount === (MAX_RETRY + 1)) {
@@ -103,11 +105,6 @@ export async function searchMovies(movieName: string): Promise<string[]> {
     })
 }
 
-
-
-
-
-const MOVIE_TAGS = ["剧情", "喜剧", "动作", "爱情", "科幻", "动画", "悬疑", "惊悚", "恐怖", "犯罪", "同性", "音乐", "歌舞", "传记", "历史", "战争", "西部", "奇幻", "冒险", "灾难", "武侠", "情色"]
 export async function selectMoviesByType(tag: string, start = 0, pageCount = 800): Promise<[DynamicMovieType]> {
   return await request(`https://movie.douban.com/j/new_search_subjects`, {
     params: {
@@ -128,8 +125,6 @@ export async function selectMoviesByType(tag: string, start = 0, pageCount = 800
       return [];
     })
 }
-
-
 
 const MOVIE_TYPES = { '剧情': '11', '喜剧': '24', '动作': '5', '爱情': '13', '科幻': '17', '动画': '25', '悬疑': '10', '惊悚': '19', '恐怖': '20', '纪录片': '1', '短片': '23', '情色': '6', '同性': '26', '音乐': '14', '歌舞': '7', '家庭': '28', '儿童': '8', '传记': '2', '历史': '4', '战争': '22', '犯罪': '3', '西部': '27', '奇幻': '16', '冒险': '15', '灾难': '12', '武侠': '29', '古装': '30', '运动': '18', '黑色电影': '31' };
 const RATING_RANGE = ['100:90', '90:80', '80:70', '70:60', '60:50', '50:40', '40:30', '30:20', '20:10', '10:0'];
@@ -266,5 +261,3 @@ export async function searchMovie(movieId: string): Promise<MovieType | null> {
       return null;
     });
 }
-
-// searchMovie(30346025);

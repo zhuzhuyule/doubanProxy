@@ -1,6 +1,5 @@
 import logSymbol from 'log-symbols';
 import movieCtrl from '@controllers/movie';
-import operateCtrl from '@controllers/operate';
 import dynamicMovieCtrl from '@controllers/dynamicMovie';
 import { calcProcess, getCoverImageId, transferTime } from '@utils/tool';
 import { searchMoviesByTag, searchMoviesByType, searchMovie, selectMoviesByType } from './request';
@@ -146,23 +145,23 @@ export async function updateDetailMovies(ids: string[]): Promise<string[]> {
 
       const title = `Start request movie! [id: ${id} | current index: ${idIndex+1}] [${calcProcess(idIndex, ids.length)}]`;
       const endMsg = `End get the [id: ${id}]`;
-      await logger.execOperate(title, endMsg, { operate: 'updateDetailMovies', args: [idIndex] }, async () => {
-        movie = await requestSingleMovie(id);
-        if (movie) {
-          failedCount = 0;
-          if (movie.notFound) {
-            logger.error(`Skip [${idIndex}] "${id}" movie`);
-          } else {
-            logger.info(`The [${idIndex}] "${id}" has saved!《${movie.title}》`);
-          }
+      logger.addGlobalContext(title);
+      movie = await requestSingleMovie(id);
+      if (movie) {
+        failedCount = 0;
+        if (movie.notFound) {
+          logger.error(`Skip [${idIndex}] "${id}" movie`);
         } else {
-          failedCount++;
-          logger.error(`The [${idIndex}] movie save failure`);
-          if (failedCount === 15) {
-            throw new Error('There is a problem with the network and try again later！');
-          }
+          logger.info(`The [${idIndex}] "${id}" has saved!《${movie.title}》`);
         }
-      });
+      } else {
+        failedCount++;
+        logger.error(`The [${idIndex}] movie save failure`);
+        if (failedCount === 15) {
+          throw new Error('There is a problem with the network and try again later！');
+        }
+      }
+      logger.removeGlobalContext(endMsg);
     }
   }
   if (skipCount !== 0) {

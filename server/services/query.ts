@@ -1,12 +1,9 @@
 import detailMovieController from '@controllers/detailMovie';
 import movieCtrl from '@controllers/movie';
-import proxyCtrl from '@controllers/proxy';
 import { DetailMovieType } from '@models/detailMovie';
 import { getCoverLink, similarity } from '@utils/tool';
 import express from 'express';
-import { getLogger } from 'log4js';
 
-const logger = getLogger('query');
 export async function findDoubanId(req: express.Request, res: express.Response): Promise<void>  {
   const movie = await movieCtrl.findOneById(req.params.id);
   res.json(movie)
@@ -65,19 +62,4 @@ export async function searchMovie(req: express.Request, res: express.Response): 
     return 1
   });
   res.json(all ? list : list.splice(0, 5));
-}
-
-export async function findSun(req: express.Request, res: express.Response): Promise<void> {
-  const { top = 10, h = 0, m = 0, date = '', valid = false } = req.query;
-  let proxies;
-  if (valid) {
-    proxies = await proxyCtrl.getValidProxies('sun', parseInt(top.toString()));
-    logger.info('valid',proxies);
-
-  } else {
-    proxies = await proxyCtrl.getProxies({ type: 'sun', top: parseInt(top.toString()), hour: parseInt(h.toString()), min: parseInt(m.toString()), baseDate: date.toString() });
-    logger.info('top',proxies);
-  }
-  logger.info(proxies);
-  res.json(proxies);
 }

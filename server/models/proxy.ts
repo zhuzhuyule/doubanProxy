@@ -6,7 +6,7 @@ export interface ProxyType {
   type: string;
   expire_time?: number,
   useCount?: number,
-  invalidTime?: number,
+  invalidOperates?: string[],
 }
 
 const Schema = new mongoose.Schema({
@@ -15,7 +15,7 @@ const Schema = new mongoose.Schema({
   type: String,
   expire_time: Number,
   useCount: Number,
-  invalidTime: Number,
+  invalidOperates: Array(String),
 });
 
 export default {
