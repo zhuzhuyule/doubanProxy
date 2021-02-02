@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+import operateCtrl from '@controllers/operate';
 import logSymbol from 'log-symbols';
 import { getLogger as getLogger4js, Logger } from 'log4js';
 import { DEFAULT_TITLE_SIGN, LOG_CONTEXT_KEYS } from './constants';
@@ -52,17 +54,23 @@ class GlobalContext {
 const globalContext = new GlobalContext();
 
 type NewLogger = {
-  // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-explicit-any
-  addGlobalContext: (title?: string, contextKey?: string, contextValue?: any) => void;
-  // eslint-disable-next-line no-unused-vars
+  addGlobalContext: (title?: string, contextKey?: string, contextValue?: unknown) => void;
   removeGlobalContext: (endMsg?: string, contextKey?: string) => void;
   clearGlobalContext: () => void;
+  execOperate: (title: string | undefined, endMsg: string | undefined, options: { operate: string, args: Array<string|number> }, next: () => Promise<unknown>) => Promise<void>;
+  initialOperate: (operateName: string) => Promise<Array<number|string>>;
 } & Logger;
 
 const getLogger = (category?: string): NewLogger => {
   const logger = getLogger4js(category);
+  const _error = logger.error;
 
   Object.defineProperties(logger, {
+    // error: {
+    //   value: (...args) => {
+    //     _error(logSymbol.error, ...args);
+    //   }
+    // },
     addGlobalContext: {
       value: (title = '', contextKey = LOG_CONTEXT_KEYS.operate, contextValue = {}) => {
         const formatTitle = globalContext.addContext(contextKey, contextValue);
@@ -78,13 +86,50 @@ const getLogger = (category?: string): NewLogger => {
     clearGlobalContext: {
       value: globalContext.cleanContext,
     },
+    execOperate: {
+      value: async (title = '', endMsg = '', options: { operate: string, args: Array<string|number> }, next: () => Promise<unknown>) => {
+        const formatTitle = globalContext.addContext(LOG_CONTEXT_KEYS.operate, options);
+        logger.trace(title && formatTitle(title));
+        if (options.operate && options.args) {
+          await operateCtrl.update(options.operate, options.args)
+          .catch(e => {
+            logger.error(`Update ${options.operate} args [${options.args}] failed!`, e);
+          });
+        } else {
+          logger.error(`Invalid context value: ${JSON.stringify(options)}`);
+        }
+        let isSuccess = true;
+        try {
+          await next();
+        } catch (error) {
+          logger.error(`Find some error: ${error}`);
+          isSuccess = false;
+        } finally  {
+          logger.trace(`[END]${logSymbol.info}`, endMsg);
+          globalContext.removeContext(LOG_CONTEXT_KEYS.operate)
+          if ( options.operate && options.args) {
+            await operateCtrl.update(options.operate, options.args, isSuccess)
+            .catch(e => {
+              logger.error(`Update ${options.operate} args [${options.args}] failed!`, e);
+            });
+          } else {
+            logger.error(`Invalid context value: ${JSON.stringify(options)}`);
+          }
+        }
+      },
+    },
+    initialOperate: {
+      value: async (operateName: string) => {
+        globalContext.cleanContext();
+        const operate = await operateCtrl.findLatestOne(operateName);
+        return operate?.args || [];
+      },
+    },
   })
-
   return logger as NewLogger;
 }
 
 const getGlobalContext = (contextKey: string): unknown => globalContext.get(contextKey);
-
 
 export {
   getLogger,

@@ -1,5 +1,6 @@
 import logSymbol from 'log-symbols';
 import movieCtrl from '@controllers/movie';
+import operateCtrl from '@controllers/operate';
 import dynamicMovieCtrl from '@controllers/dynamicMovie';
 import { calcProcess, getCoverImageId, transferTime } from '@utils/tool';
 import { searchMoviesByTag, searchMoviesByType, searchMovie, selectMoviesByType } from './request';
@@ -12,25 +13,27 @@ const logger = getLogger();
 const LEVEL_MOVIE_TYPES = ['科幻', '剧情', '喜剧', '动作', '爱情', '动画', '悬疑', '惊悚', '恐怖', '纪录片', '短片', '情色', '同性', '音乐', '歌舞', '家庭', '儿童', '传记', '历史', '战争', '犯罪', '西部', '奇幻', '冒险', '灾难', '武侠', '古装', '运动', '黑色电影'];
 async function updateAccordingTypesAndLevel(types = LEVEL_MOVIE_TYPES) {
   try {
-    logger.clearGlobalContext();
-    for (let level = 0; level < 10; level++) {
-      for (let typeIndex = 0, len = types.length; typeIndex < len; typeIndex++) {
+    let [level = 0, typeIndex = 0] = await logger.initialOperate('updateAccordingTypesAndLevel') as number[];
+    for (; level < 10; level++) {
+      for (let len = types.length; typeIndex < len; typeIndex++) {
         const type = types[typeIndex];
-        logger.addGlobalContext(`Update "${type}" type movie [${level}] | ${calcProcess(typeIndex + (level * len), len * 10)}`)
 
-        const movies = await searchMoviesByType(type, level);
-        for (let idIndex = 0; idIndex < movies.length; idIndex++) {
-          const movie = movies[idIndex];
-          if (movie && movie.id && type) {
-            await dynamicMovieCtrl.update({
-              ...movie,
-              rating: movie.score || '0',
-              coverId: getCoverImageId(movie.cover_url),
-              update: transferTime(),
-            });
+        const title = `Update "${type}" type movie [l.${level}] | ${calcProcess(typeIndex + (level * len), len * 10)}`;
+        const endMsg = `End getting "${type}" type movie [l.${level}]`;
+        await logger.execOperate(title, endMsg, { operate: 'updateAccordingTypesAndLevel', args: [level, typeIndex] }, async () => {
+          const movies = await searchMoviesByType(type, level);
+          for (let idIndex = 0; idIndex < movies.length; idIndex++) {
+            const movie = movies[idIndex];
+            if (movie && movie.id && type) {
+              await dynamicMovieCtrl.update({
+                ...movie,
+                rating: movie.score || '0',
+                coverId: getCoverImageId(movie.cover_url),
+                update: transferTime(),
+              });
+            }
           }
-        }
-        logger.removeGlobalContext(`End getting "${type}" type movie`);
+        })
       }
     }
   } catch (e) {
@@ -46,32 +49,38 @@ async function updateAccordingTypesAndLevel(types = LEVEL_MOVIE_TYPES) {
 const NEW_MOVIE_TAGS = ["科幻", "喜剧", "奇幻", "冒险", "灾难", "动作", "武侠", "爱情", "动画", "悬疑", "惊悚", "恐怖", "剧情", "犯罪", "同性", "音乐", "歌舞", "传记", "历史", "战争", "西部", "情色"]
 async function updateNewTags(tags = NEW_MOVIE_TAGS) {
   try {
-    logger.clearGlobalContext();
-    for (let tagIndex = 0, len = tags.length; tagIndex < len; tagIndex++) {
-      const tag = tags[tagIndex];
-      logger.addGlobalContext(`Update "${tag}" tag movie | ${calcProcess(tagIndex, len)}`)
-      const pageLimit = 300;
-      let total = 0;
-      let movies: Array<DynamicMovieType & { cover?: string }> = [];
-      do {
-        logger.info(`Start getting ${Math.round(total/pageLimit)+1} page movies!`);
-        movies = await selectMoviesByType(tag, total, pageLimit);
-        total = movies.length + total;
+    const pageLimit = 300;
 
-        logger.info(`Had got ${movies.length} movies in page ${Math.round(total/pageLimit)+1}! Total: ${total}`);
-        for (let idIndex = 0; idIndex < movies.length; idIndex++) {
-          const movie = movies[idIndex];
-          if (movie.id && tag) {
-            await dynamicMovieCtrl.update({
-              ...movie,
-              tag,
-              coverId: getCoverImageId(movie.cover),
-              update: transferTime(),
-            });
+    // eslint-disable-next-line prefer-const
+    let [tagIndex = 0, page = 0] = await logger.initialOperate('updateNewTags') as number[];
+    let start = page * 300;
+    for (let len = tags.length; tagIndex < len; tagIndex++) {
+      const tag = tags[tagIndex];
+      let movies: Array<DynamicMovieType & { cover?: string }> = [];
+
+      logger.addGlobalContext(`Update "${tag}" tag movie | ${calcProcess(tagIndex, len)}`);
+      do {
+        const page = Math.round(start/pageLimit)+1;
+        const title = `Start getting "${tag}" in ${page} page movies!`;
+        const endMsg = `End getting "${tag}" in ${page} page movies! Total: ${start}`;
+        await logger.execOperate(title, endMsg, { operate: 'updateNewTags', args: [tagIndex, page] }, async () => {
+          movies = await selectMoviesByType(tag, start, pageLimit);
+          start = movies.length + start;
+  
+          for (let idIndex = 0; idIndex < movies.length; idIndex++) {
+            const movie = movies[idIndex];
+            if (movie.id && tag) {
+              await dynamicMovieCtrl.update({
+                ...movie,
+                tag,
+                coverId: getCoverImageId(movie.cover),
+                update: transferTime(),
+              });
+            }
           }
-        }
+        })
       } while (movies.length > 0);
-      
+      start = 0;
       logger.removeGlobalContext(`End getting "${tag}" type movie`);
     }
   } catch (e) {
@@ -86,22 +95,25 @@ async function updateNewTags(tags = NEW_MOVIE_TAGS) {
 const NORMAL_MOVIE_TYPES = ['热门', '最新', '经典', '可播放', '豆瓣高分', '冷门佳片', '华语', '欧美', '韩国', '日本', '动作', '喜剧', '爱情', '科幻', '悬疑', '恐怖', '文艺'];
 async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
   try {
-    logger.clearGlobalContext();
-    for (let tagIndex = 0, len = tags.length; tagIndex < len; tagIndex++) {
+    let [tagIndex = 0] = await logger.initialOperate('updateOldTags') as number[];
+
+    for (let len = tags.length; tagIndex < len; tagIndex++) {
       const tag = tags[tagIndex];
-      logger.addGlobalContext(`Update "${tag}" tag movie | ${calcProcess(tagIndex, len)}`)
-      const movies = await searchMoviesByTag(tag);
-      for (let idIndex = 0; idIndex < movies.length; idIndex++) {
-        const movie = movies[idIndex];
-        if (movie.id && tag) {
-          await dynamicMovieCtrl.update({
-            ...movie,
-            tag,
-            update: transferTime(),
-          });
+      const title = `Start getting "${tag}" movies!`;
+      const endMsg = `End getting "${tag}" movies!`;
+      await logger.execOperate(title, endMsg, { operate: 'updateOldTags', args: [tagIndex] }, async () => {
+        const movies = await searchMoviesByTag(tag);
+        for (let idIndex = 0; idIndex < movies.length; idIndex++) {
+          const movie = movies[idIndex];
+          if (movie.id && tag) {
+            await dynamicMovieCtrl.update({
+              ...movie,
+              tag,
+              update: transferTime(),
+            });
+          }
         }
-      }
-      logger.removeGlobalContext(`End getting "${tag}" tag movie`);
+      });
     }
   } catch (e) {
     logger.error(logSymbol.error, `Sorry! Find some errors, The operate will done`);
@@ -115,9 +127,9 @@ async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
 export async function updateDetailMovies(ids: string[]): Promise<string[]> {
   let failedCount = 0;
   let skipCount = 0;
-  logger.clearGlobalContext();
-  logger.addGlobalContext('Start update detail movies');
-  for (let idIndex = 0; idIndex < ids.length; idIndex++) {
+  let [idIndex = 0] = await logger.initialOperate('updateDetailMovies') as number[];
+
+  for (; idIndex < ids.length; idIndex++) {
     const id = ids[idIndex];
     let movie = await movieCtrl.findOneById(id);
     if (movie) {
@@ -130,30 +142,32 @@ export async function updateDetailMovies(ids: string[]): Promise<string[]> {
       if (skipCount > 0) {
         logger.info(`Has skiped "${skipCount}" existed movies! [current index: ${idIndex+1}] [${calcProcess(idIndex, ids.length)}]`);
       }
-      logger.addGlobalContext(`Start request movie! [id: ${id} | current index: ${idIndex+1}] [${calcProcess(idIndex, ids.length)}]`);
       skipCount = 0;
-      movie = await requestSingleMovie(id);
-      if (movie) {
-        failedCount = 0;
-        if (movie.notFound) {
-          logger.error(logSymbol.error, `Skip [${idIndex}] "${id}" movie`);
+
+      const title = `Start request movie! [id: ${id} | current index: ${idIndex+1}] [${calcProcess(idIndex, ids.length)}]`;
+      const endMsg = `End get the [id: ${id}]`;
+      await logger.execOperate(title, endMsg, { operate: 'updateDetailMovies', args: [idIndex] }, async () => {
+        movie = await requestSingleMovie(id);
+        if (movie) {
+          failedCount = 0;
+          if (movie.notFound) {
+            logger.error(`Skip [${idIndex}] "${id}" movie`);
+          } else {
+            logger.info(`The [${idIndex}] "${id}" has saved!《${movie.title}》`);
+          }
         } else {
-          logger.info(`The [${idIndex}] "${id}" has saved!《${movie.title}》`);
+          failedCount++;
+          logger.error(`The [${idIndex}] movie save failure`);
+          if (failedCount === 15) {
+            throw new Error('There is a problem with the network and try again later！');
+          }
         }
-      } else {
-        failedCount++;
-        logger.error(logSymbol.error, `The [${idIndex}] movie save failure`);
-        if (failedCount === 15) {
-          throw new Error('There is a problem with the network and try again later！');
-        }
-      }
-      logger.removeGlobalContext(`End get the [id: ${id}] ${movie && `《${movie.title}》`}`);
+      });
     }
   }
   if (skipCount !== 0) {
     logger.info(`Has skiped "${skipCount}" existed movies! [current index: ${ids.length}]`);
   }
-  logger.removeGlobalContext('End update detail movies');
   return ids;
 }
 

@@ -24,7 +24,7 @@ function match(text = '', reg: RegExp, index = 0): string {
   return (matchs && matchs.length > index) ? matchs[index] : '';
 }
 
-const transferTime = (date?: number | string | null): number => {
+const transferTime = (date?: number | string | null | dayjs.Dayjs): number => {
   const time = dayjs(date || undefined);
   return time.isValid() ? parseInt(time.format(DATE_FORMAT.shortInt), 10) : 0;
 }

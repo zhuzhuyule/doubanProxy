@@ -12,7 +12,7 @@ configure(log4jsConfig.test);
 setTimeout(async () => {
   // await proxy.getAll();
   // proxy.get
-  await updateDynamicMovies();
-  // await updateAll();
+  // await updateDynamicMovies('newTag');
+  await updateAll();
 }, 5000);
 
