@@ -3,7 +3,7 @@ import { getGlobalContext, LoggingEvent } from '@utils/logger';
 
 const tokens = {
   [LOG_CONTEXT_KEYS.file]: (logEvent: { fileName: string, lineNumber: number }): string => {
-    const file = logEvent.fileName.match(/(?<=[/\\])(?<name>[^/\\]+)(?=\.(?<extend>\w+)$)/);
+    const file = logEvent.fileName.match(/(?<name>.{11})(?=\.(?<extend>\w+)$)/);
     return file && `${file.groups?.name||''}` || ''
   },
   [LOG_CONTEXT_KEYS.operate]: (logEvent: LoggingEvent): string => {
