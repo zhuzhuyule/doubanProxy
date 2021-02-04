@@ -46,7 +46,7 @@ const baseConfig = {
         maxLogSize: 1024 * 1024 * 5,
       },
       everything: {
-        type: 'DateFile',
+        type: 'dateFile',
         filename: './log/everything',
         pattern: '-yyyy-MM-dd.log',
         alwaysIncludePattern: true,
@@ -55,7 +55,7 @@ const baseConfig = {
         maxLogSize: 1024 * 1024 * 5,
       },
       db: {
-        type: 'DateFile',
+        type: 'dateFile',
         filename: './log/db',
         pattern: '-yyyy-MM-dd.log',
         alwaysIncludePattern: true,
@@ -64,7 +64,7 @@ const baseConfig = {
         maxLogSize: 1024 * 1024 * 5,
       },
       api: {
-        type: 'DateFile',
+        type: 'dateFile',
         filename: './log/api',
         pattern: '-yyyy-MM-dd.log',
         alwaysIncludePattern: true,
