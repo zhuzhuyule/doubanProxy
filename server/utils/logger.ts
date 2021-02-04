@@ -18,14 +18,19 @@ class GlobalContext {
     return values && values.length > 0 ? values[values.length-1] : undefined;
   }
   addContext(key: string, value: any) {
-    const values = this.store[key];
-    if (values === undefined) {
-      value.__deep = 1;
-      this.store[key] = [value];
+    if (typeof value === 'object') {
+      const values = this.store[key];
+      if (values === undefined) {
+        value.__deep = 1;
+        this.store[key] = [value];
+      } else {
+        value.__deep = this.store[key].length + 1;
+        this.store[key].push[value];
+      }
     } else {
-      value.__deep = this.store[key].length + 1;
-      this.store[key].push[value];
+      this.store[key] = [value];
     }
+    
     return (title: string) => this.formatTitle(key, title);
   }
   removeContext(key: string) {
@@ -38,8 +43,12 @@ class GlobalContext {
       }
     }
   }
-  cleanContext() {
-    this.store = {};
+  cleanContext(contextKey?: string) {
+    if (contextKey) {
+      this.store[contextKey] = [];
+    } else {
+      this.store = {};
+    }
   }
 
   formatTitle(key: string, title: string, sign = DEFAULT_TITLE_SIGN) {
@@ -74,12 +83,12 @@ const getLogger = (category?: string): NewLogger => {
     addGlobalContext: {
       value: (title = '', contextKey = LOG_CONTEXT_KEYS.operate, contextValue = {}) => {
         const formatTitle = globalContext.addContext(contextKey, contextValue);
-        logger.trace(title && formatTitle(title));
+        title && logger.trace(formatTitle(title));
       },
     },
     removeGlobalContext: {
       value: (endMsg = '', contextKey = LOG_CONTEXT_KEYS.operate) => {
-        logger.trace(`[END]${logSymbol.info}`, endMsg);
+        endMsg && logger.trace(`[END]${logSymbol.info}`, endMsg);
         globalContext.removeContext(contextKey)
       },
     },
@@ -88,6 +97,7 @@ const getLogger = (category?: string): NewLogger => {
     },
     execOperate: {
       value: async (title = '', endMsg = '', options: { operate: string, args: Array<string|number> }, next: () => Promise<unknown>) => {
+        globalContext.addContext(options.operate, title)
         const formatTitle = globalContext.addContext(LOG_CONTEXT_KEYS.operate, options);
         logger.trace(title && formatTitle(title));
         if (options.operate && options.args) {
@@ -120,7 +130,8 @@ const getLogger = (category?: string): NewLogger => {
     },
     initialOperate: {
       value: async (operateName: string) => {
-        globalContext.cleanContext();
+        globalContext.cleanContext(operateName);
+        globalContext.addContext(operateName, `Start ${operateName}`)
         const operate = await operateCtrl.findLatestOne(operateName);
         return operate?.args || [];
       },

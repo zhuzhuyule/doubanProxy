@@ -76,7 +76,7 @@ const baseConfig = {
     categories: {
       default: {
         appenders: ['console', 'everything'],
-        level: 'info',
+        level: 'trace',
         enableCallStack: true,
       },
       test: {
