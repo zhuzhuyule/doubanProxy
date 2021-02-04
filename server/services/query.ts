@@ -1,6 +1,7 @@
 import detailMovieController from '@controllers/detailMovie';
 import movieCtrl from '@controllers/movie';
 import { DetailMovieType } from '@models/detailMovie';
+import { getGlobalContext, getLogger } from '@utils/logger';
 import { getCoverLink, similarity } from '@utils/tool';
 import express from 'express';
 
@@ -14,6 +15,12 @@ export async function findIMDBId(req: express.Request, res: express.Response): P
     IMDb: req.params.id
   });
   res.json(movie);
+}
+
+export async function getStatus(_: express.Request, res: express.Response): Promise<void>  {
+  const operates = ['updateAccordingTypesAndLevel', 'updateNewTags','updateOldTags','updateDetailMovies'];
+  const result = operates.map(operate => ({[operate]: getGlobalContext(operate) || 'Done'}));
+  res.json(result);
 }
 
 export async function searchMovie(req: express.Request, res: express.Response): Promise<void>  {

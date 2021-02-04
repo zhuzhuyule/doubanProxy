@@ -6,12 +6,13 @@ import { transferTime } from '@utils/tool';
 import { Request, Response } from 'express';
 import { updateAll, updateDynamicMovies } from './spider';
 
-export function updateMovies(req: Request<{ mode: 'tag' | 'type' }>, res: Response): void  {
-  updateDynamicMovies(req.params.mode);
+export function updateMovies(req: Request, res: Response): void  {
+  const { mode } = req.query;
+  updateDynamicMovies(mode?.toString());
   res.send('Running get all command!')
 }
 
-export async function updateDetail(_: Request<{ mode: 'tag' | 'type' }>, res: Response): Promise<void>  {
+export async function updateDetail(_: Request, res: Response): Promise<void>  {
   const ids = await dynamicMovieCtrl.findAll();
   res.send('Running get all command!'+ ids.length );
   updateAll();
