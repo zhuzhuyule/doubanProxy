@@ -6,6 +6,7 @@ import { searchMoviesByTag, searchMoviesByType, searchMovie, selectMoviesByType 
 import { MovieType } from '@models/movie';
 import { DynamicMovieType } from '@models/dynamicMovie';
 import { getGlobalContext, getLogger } from '@utils/logger';
+import { mergeMovie } from './update';
 
 const logger = getLogger();
 
@@ -254,6 +255,7 @@ export async function updateDynamicMovies(mode?: string): Promise<void> {
       await updateAccordingTypesAndLevel();
     }
     await updateAll();
+    await mergeMovie();
   } catch (e) { 
     logger.error(logSymbol.error, `Sorry, getting movie failed:`);
     logger.error(logSymbol.error, e);

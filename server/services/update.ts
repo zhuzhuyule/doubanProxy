@@ -9,13 +9,16 @@ import { updateAll, updateDynamicMovies } from './spider';
 export function updateMovies(req: Request, res: Response): void  {
   const { mode } = req.query;
   updateDynamicMovies(mode?.toString());
-  res.send('Running get all command!')
+  setTimeout(() => {
+    res.redirect('/api/status')
+  }, 2000);
 }
 
 export async function updateDetail(_: Request, res: Response): Promise<void>  {
-  const ids = await dynamicMovieCtrl.findAll();
-  res.send('Running get all command!'+ ids.length );
   updateAll();
+  setTimeout(() => {
+    res.redirect('/api/status')
+  }, 2000);
 }
 
 export async function mergeDynamicMovie(): Promise<void>  {
