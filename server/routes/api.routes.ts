@@ -50,8 +50,8 @@ router.get('/', (_: express.Request, res: express.Response) => {
     </br>
     <ul>
       <li><a href="/api/updateMovies?mode=type">updateMovies by type</a> [Quickly]</li>
-      <li><a href="/api/updateMovies?mode=tag">updateMovies by old tags</a>  [Quickly]</li>
       <li><a href="/api/updateMovies?mode=newTag">updateMovies by new tags</a> [Slowly]</li>
+      <li><a href="/api/updateMovies?mode=tag">updateMovies by old tags</a>  [Quickly]</li>
       <li><a href="/api/updateDetails">updateDetails</a> [Slowly]</li>
       <li><a href="/api/mergeMovie">mergeMovie</a> [Quickly]</li>
     </ul>

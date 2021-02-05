@@ -308,7 +308,12 @@ export default new class Agent {
       }
       return '';
     } catch (error) {
-      logger.error(logSymbol.error, error);
+      if (this.proxy.type === 'free') {
+        logger.error(logSymbol.error, error.code || error.response?.code, error.errno || error.response?.statusText);
+        logger.error(logSymbol.error + ' Please check your <FREE_PROXY_HOST> and <FREE_PROXY_PORT> config');
+      } else {
+        logger.error(logSymbol.error, error.code || error.response?.code, error.errno || error.response?.statusText);
+      }
       return '';
     }
   }

@@ -22,7 +22,7 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
   const validProxy = await proxy.get(url);
   const [host, port] = validProxy.split(':');
   if (!host || !port) {
-    throw { status: '500', message: 'Get empty proxy' };
+    throw { status: '500', message: 'Get empty proxy', validProxy };
   }
   retryCounter[host] = (retryCounter[host] || 0) + 1;
   retryCounter[host] > 1 && logger.info(`Use the proxy: "${host}:${port}" retry [${retryCounter[host] - 1}] times`);
