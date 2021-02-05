@@ -1,7 +1,7 @@
 import { findDoubanId, findIMDBId, getStatus, searchMovie } from '@services/query';
 import { mergeMovie, updateDetail, updateMovies } from '@services/update';
-import express from 'express'
-import fs from 'fs';
+import express from 'express';
+import { exec } from 'child_process';
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.get('/updateDetails', updateDetail);
 router.get('/mergeMovie', mergeMovie);
 
 router.get('/restart', (_: express.Request, res: express.Response) => {
-  fs.writeFileSync('server/routes/restart.ts', `${process.pid}`)
+  exec('touch server/index.ts');
   res.redirect('/api/')
 });
 

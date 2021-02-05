@@ -6,3 +6,4 @@ yarn.lock
 
 build/
 log/
+server/configs/customer.config.ts
