@@ -2,6 +2,7 @@ import { findDoubanId, findIMDBId, getStatus, searchMovie } from '@services/quer
 import { mergeMovie, updateDetail, updateMovies } from '@services/update';
 import express from 'express';
 import { exec } from 'child_process';
+import gitPull from 'git-pull-or-clone';
 
 const router = express.Router();
 
@@ -19,6 +20,12 @@ router.get('/restart', (_: express.Request, res: express.Response) => {
   res.redirect('/api/')
 });
 
+router.get('/update', (_: express.Request, res: express.Response) => {
+  gitPull('https://github.com/zhuzhuyule/doubanProxy.git', './temp', () => {
+    exec('cp -rf temp/server . && cp temp/package.json package.json && rm -rf temp');
+  });
+  res.redirect('/api/')
+});
 
 router.get('/', (_: express.Request, res: express.Response) => {
   res.send(`
@@ -56,6 +63,7 @@ router.get('/', (_: express.Request, res: express.Response) => {
       <li><a href="/api/mergeMovie">mergeMovie</a> [Quickly]</li>
     </ul>
     <div><a href="/api/restart">Restart Server</a></div>
+    <div><a href="/api/update">Update</a></div>
   </body>
   </html>
   `);
