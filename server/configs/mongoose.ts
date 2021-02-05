@@ -6,7 +6,7 @@ import { getLogger } from '@utils/logger';
 
 const logger = getLogger('mongodb');
 // connect to mongo db
-const mongoUri = config.mongo.host;
+const mongoUri = config.mongo.uri;
 
 mongoose.connection.on('connected', function () {    
     logger.info('Mongoose connection open to ' + mongoUri);  
