@@ -7,6 +7,8 @@
     "start": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/index.ts",
     "start:test": "ts-node -r tsconfig-paths/register ./server/test.ts",
     "start:test:watch": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/test.ts",
+    "build:image": "docker image build -t zhuzhuyule/douban:latest .",
+    "build:git-node": "docker image build -f Dockerfile.git.node -t zhuzhuyule/git-node .",
     "test": "test"
   },
   "keywords": [
@@ -14,6 +16,7 @@
     "api",
     "movie"
   ],
+  "repository": "https://github.com/zhuzhuyule/doubanProxy.git",
   "author": "zhuzhuyule",
   "license": "ISC",
   "dependencies": {

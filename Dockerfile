@@ -17,7 +17,7 @@ RUN npm prune --production
 # RUN curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | bash -s -- -b /app
 # RUN ./node-prune 
 
-FROM node:14-alpine
+FROM zhuzhuyule/git-node:latest
 
 COPY --from=BUILD_IMAGE /app/node_modules /app/node_modules
 COPY --from=BUILD_IMAGE /app/tsconfig.json /app/tsconfig.json
