@@ -3,6 +3,7 @@ import { mergeMovie, updateDetail, updateMovies } from '@services/update';
 import express from 'express';
 import { exec } from 'child_process';
 import gitPull from 'git-pull-or-clone';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -20,9 +21,17 @@ router.get('/restart', (_: express.Request, res: express.Response) => {
   res.redirect('/api/')
 });
 
+
 router.get('/update', (_: express.Request, res: express.Response) => {
   gitPull('https://github.com/zhuzhuyule/doubanProxy.git', './temp', () => {
-    exec('cp -rf temp/server . && cp temp/package.json package.json && rm -rf temp');
+    const packageContent  = fs.readFileSync('package.json');
+    const packageJson = JSON.parse(packageContent.toString());
+
+    const newPackageContent  = fs.readFileSync('./temp/package.json');
+    const newPackageJson = JSON.parse(newPackageContent.toString());
+
+    const packageUpdate = JSON.stringify(packageJson.dependencies) !== JSON.stringify(newPackageJson.dependencies);
+    exec(`cp temp/package.json package.json && ${packageUpdate ? 'yarn &&' : ''} cp -rf temp/server . && rm -rf temp`);
   });
   res.redirect('/api/')
 });
