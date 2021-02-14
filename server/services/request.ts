@@ -74,11 +74,11 @@ async function request(url: string, options?: AxiosRequestConfig, retryCount = 1
       } else {
         logger.error(logSymbol.error, `Use Proxy: ${host}:${port}`, e);
       }
-      if (retryCounter[host] === NUMBER_OF_RETRY) {
+      if (retryCounter[host] >= NUMBER_OF_RETRY) {
         await proxy.invalidForUrl(validProxy, url);
         delete retryCounter[host];
       }
-      if (retryCount === (MAX_RETRY + 1)) {
+      if (retryCount > MAX_RETRY) {
         logger.error(logSymbol.error, `The maximum number of proxy requests exceeded`);
         throw { status: 500, message: 'The maximum number of proxy requests exceeded' }
       }
