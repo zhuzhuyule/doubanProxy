@@ -4,12 +4,20 @@ import { updateDynamicMovies } from './spider';
 
 const logger = getLogger();
 
-const job = schedule.scheduleJob('0 0 3 * * *', () => {
-  logger.info('Start schedule job');
+const tagJob = schedule.scheduleJob('Update tag movies','0 0 2 * * *', () => {
+  logger.info(tagJob.name);
   updateDynamicMovies('tag');
+});
+
+const typeJob = schedule.scheduleJob('Update type movies','0 0 2 * * *', () => {
+  logger.info(tagJob.name);
   updateDynamicMovies('type');
+});
+
+const newTagJob = schedule.scheduleJob('Update newTag movies','0 0 3 * * *', () => {
+  logger.info(tagJob.name);
   updateDynamicMovies('newTag');
 });
 
-const schedules = [job];
+const schedules = [tagJob, typeJob, newTagJob];
 export { schedules };
