@@ -244,7 +244,6 @@ async function requestSingleMovie(id: string, isRetry = false): Promise<MovieTyp
 }
 
 
-// const tags = ['热门', '最新'];
 export async function updateDynamicMovies(mode?: string): Promise<void> {
   try {
     if (mode === 'newTag') {

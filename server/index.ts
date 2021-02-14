@@ -3,6 +3,7 @@ import apiRoutes from './routes/api.routes';
 import config from './configs/config';
 import express from 'express';
 import '@configs/mongoose';
+import '@services/schedule';
 
 import { log4jsConfig } from '@configs/log4js';
 import { configure, connectLogger, getLogger } from '@utils/logger';
