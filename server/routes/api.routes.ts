@@ -4,6 +4,7 @@ import express from 'express';
 import { exec } from 'child_process';
 import gitPull from 'git-pull-or-clone';
 import fs from 'fs';
+import { updateProgram } from '@utils/tool';
 
 const router = express.Router();
 
@@ -24,14 +25,11 @@ router.get('/restart', (_: express.Request, res: express.Response) => {
 
 router.get('/update', (_: express.Request, res: express.Response) => {
   gitPull('https://github.com/zhuzhuyule/doubanProxy.git', './temp', () => {
-    const packageContent  = fs.readFileSync('package.json');
-    const packageJson = JSON.parse(packageContent.toString());
-
-    const newPackageContent  = fs.readFileSync('./temp/package.json');
-    const newPackageJson = JSON.parse(newPackageContent.toString());
-
-    const packageUpdate = JSON.stringify(packageJson.dependencies) !== JSON.stringify(newPackageJson.dependencies);
-    exec(`cp temp/package.json package.json && ${packageUpdate ? 'yarn &&' : ''} cp -rf temp/server . && rm -rf temp`);
+    try {
+      updateProgram('temp')
+    } catch {
+      updateProgram('_backup')
+    }
   });
   res.redirect('/api/')
 });

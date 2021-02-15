@@ -1,6 +1,8 @@
+import { exec } from 'child_process';
 import dayjs from 'dayjs';
 import mongoose from 'mongoose';
 import { DATE_FORMAT } from './constants';
+import fs from 'fs';
 
 export type TypeOmit<T, k> = Pick<T, Exclude<keyof T, k>>;
 
@@ -68,7 +70,24 @@ const promiseWithTimeout = <T>(time: number, promise: Promise<T>): Promise<T | '
   })
 }
 
+const backupProgram = (): void => {
+  exec(`cp -rf package.json _backup/ && cp -rf server _backup/`);
+};
+
+const updateProgram = (folder = 'temp'): void => {
+  const packageContent  = fs.readFileSync('package.json');
+  const packageJson = JSON.parse(packageContent.toString());
+
+  const newPackageContent  = fs.readFileSync(`./${folder}/package.json`);
+  const newPackageJson = JSON.parse(newPackageContent.toString());
+
+  const packageUpdate = JSON.stringify(packageJson.dependencies) !== JSON.stringify(newPackageJson.dependencies);
+  exec(`cp ${folder}/package.json package.json && ${packageUpdate ? 'yarn &&' : ''} cp -rf ${folder}/server . && rm -rf ${folder}`);
+};
+
 export {
+  backupProgram,
+  updateProgram,
   updateTable,
   getCoverLink,
   getCoverImageId,
