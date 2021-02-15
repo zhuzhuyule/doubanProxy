@@ -2,9 +2,7 @@ import { findDoubanId, findIMDBId, getStatus, searchMovie } from '@services/quer
 import { mergeMovie, updateDetail, updateMovies } from '@services/update';
 import express from 'express';
 import { exec } from 'child_process';
-import gitPull from 'git-pull-or-clone';
-import fs from 'fs';
-import { updateProgram } from '@utils/tool';
+import { pullCode } from '@utils/tool';
 
 const router = express.Router();
 
@@ -22,15 +20,8 @@ router.get('/restart', (_: express.Request, res: express.Response) => {
   res.redirect('/api/')
 });
 
-
 router.get('/update', (_: express.Request, res: express.Response) => {
-  gitPull('https://github.com/zhuzhuyule/doubanProxy.git', './temp', () => {
-    try {
-      updateProgram('temp')
-    } catch {
-      updateProgram('_backup')
-    }
-  });
+  pullCode();
   res.redirect('/api/')
 });
 

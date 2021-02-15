@@ -3,11 +3,12 @@ import dayjs from 'dayjs';
 import mongoose from 'mongoose';
 import { DATE_FORMAT } from './constants';
 import fs from 'fs';
+import gitPull from 'git-pull-or-clone';
 
 export type TypeOmit<T, k> = Pick<T, Exclude<keyof T, k>>;
 
 
-const ULR_LIST = ['https://movie.douban.com/subject', 'https://movie.douban.com/j/subject_suggest', 'https://movie.douban.com/j/search_subjects', 'https://movie.douban.com/j/new_search_subjects','https://movie.douban.com/j/chart/top_list'];
+const ULR_LIST = ['https://movie.douban.com/subject', 'https://movie.douban.com/j/subject_suggest', 'https://movie.douban.com/j/search_subjects', 'https://movie.douban.com/j/new_search_subjects', 'https://movie.douban.com/j/chart/top_list'];
 function getUrlIdentity(url: string): string {
   return ((ULR_LIST.find(identity => url.startsWith(identity)) || '').match(/([\w_]+)$/) || [''])[0];
 }
@@ -39,21 +40,21 @@ const transferTime = (date?: number | string | null | dayjs.Dayjs): number => {
 
 const getDateTime = (date?: string | number): string => {
   if (date) {
-    return `${date}`.length === 12 ? `${date}`.replace(/(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)/,'20$1-$2-$3 $4:$5:$6') : dayjs(date).format(DATE_FORMAT.standard);
+    return `${date}`.length === 12 ? `${date}`.replace(/(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)/, '20$1-$2-$3 $4:$5:$6') : dayjs(date).format(DATE_FORMAT.standard);
   }
   return '';
 }
 
-const getRealLength = ( str: string ): number => {  
+const getRealLength = (str: string): number => {
   // eslint-disable-next-line no-control-regex
-  return str.replace(/[^\x00-\xff]/g, '__').length; 
-}  
+  return str.replace(/[^\x00-\xff]/g, '__').length;
+}
 
 const calcProcess = (current = 0, total = 1): string => {
   if (total < 1) {
     return ''
   }
-  return `${(current/total * 100).toFixed(2)}%`
+  return `${(current / total * 100).toFixed(2)}%`
 }
 
 const promiseWithTimeout = <T>(time: number, promise: Promise<T>): Promise<T | 'timeout'> => {
@@ -75,19 +76,34 @@ const backupProgram = (): void => {
 };
 
 const updateProgram = (folder = 'temp'): void => {
-  const packageContent  = fs.readFileSync('package.json');
+  const packageContent = fs.readFileSync('package.json');
   const packageJson = JSON.parse(packageContent.toString());
 
-  const newPackageContent  = fs.readFileSync(`./${folder}/package.json`);
+  const newPackageContent = fs.readFileSync(`./${folder}/package.json`);
   const newPackageJson = JSON.parse(newPackageContent.toString());
 
   const packageUpdate = JSON.stringify(packageJson.dependencies) !== JSON.stringify(newPackageJson.dependencies);
   exec(`cp ${folder}/package.json package.json && ${packageUpdate ? 'yarn &&' : ''} cp -rf ${folder}/server . && rm -rf ${folder}`);
 };
 
+const pullCode = (): void => {
+  try {
+    gitPull('https://github.com/zhuzhuyule/doubanProxy.git', './temp', () => {
+      try {
+        updateProgram('temp');
+      } catch {
+        updateProgram('_backup');
+      }
+    });
+  } catch {
+    updateProgram('_backup');
+  }
+}
+
 export {
   backupProgram,
   updateProgram,
+  pullCode,
   updateTable,
   getCoverLink,
   getCoverImageId,
@@ -108,30 +124,30 @@ function similarity(str1: string, str2: string): number {
 
   let i, j;
   for (i = 0; i < len1 + 1; i++) {
-      diff[i] = new Array(len2 + 1);
-      diff[i][0] = i;
+    diff[i] = new Array(len2 + 1);
+    diff[i][0] = i;
   }
   for (i = 0; i < len2 + 1; i++) {
-      diff[0][i] = i;
+    diff[0][i] = i;
   }
 
   let temp;
   for (i = 1; i <= len1; i++) {
-      for (j = 1; j <= len2; j++) {
-          if (str1[i - 1] == str2[j - 1]) {
-              temp = 0;
-          } else {
-              temp = 1;
-          }
-          const temp1 = diff[i - 1][j - 1] + temp;
-          const temp2 = diff[i][j - 1] + 1;
-          const temp3 = diff[i - 1][j] + 1;
-
-          diff[i][j] = [temp1, temp2, temp3].reduce(
-              (min, num) => (num > min ? min : num),
-              1000
-          );
+    for (j = 1; j <= len2; j++) {
+      if (str1[i - 1] == str2[j - 1]) {
+        temp = 0;
+      } else {
+        temp = 1;
       }
+      const temp1 = diff[i - 1][j - 1] + temp;
+      const temp2 = diff[i][j - 1] + 1;
+      const temp3 = diff[i - 1][j] + 1;
+
+      diff[i][j] = [temp1, temp2, temp3].reduce(
+        (min, num) => (num > min ? min : num),
+        1000
+      );
+    }
   }
   return 1 - diff[len1][len2] / Math.max(len1, len2);
 }

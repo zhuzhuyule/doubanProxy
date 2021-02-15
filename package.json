@@ -4,9 +4,11 @@
   "description": "douban api proxy",
   "main": "./server",
   "scripts": {
-    "start": "nodemon --delay 2500ms --watch server --exec ts-node -r tsconfig-paths/register ./server/index.ts",
+    "start": "npm run updateCode && nodemon --delay 2500ms --watch server --exec npm run server",
     "start:test": "ts-node -r tsconfig-paths/register ./server/test.ts",
     "start:test:watch": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/test.ts",
+    "server": "ts-node -r tsconfig-paths/register ./server/index.ts",
+    "updateCode": "ts-node -r tsconfig-paths/register ./server/pullCode.ts",
     "build:image": "docker image build -t zhuzhuyule/douban:latest .",
     "build:git-node": "docker image build -f Dockerfile.git.node -t zhuzhuyule/git-node .",
     "test": "test"
