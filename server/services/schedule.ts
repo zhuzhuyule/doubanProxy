@@ -9,7 +9,7 @@ const tagJob = schedule.scheduleJob('Update tag movies','0 0 2 * * *', () => {
   updateDynamicMovies('tag');
 });
 
-const typeJob = schedule.scheduleJob('Update type movies','0 5 12 * * *', () => {
+const typeJob = schedule.scheduleJob('Update type movies','0 0 2 * * *', () => {
   logger.info(typeJob.name);
   updateDynamicMovies('type');
 });
