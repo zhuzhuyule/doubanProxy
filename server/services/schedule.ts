@@ -9,13 +9,13 @@ const tagJob = schedule.scheduleJob('Update tag movies','0 0 2 * * *', () => {
   updateDynamicMovies('tag');
 });
 
-const typeJob = schedule.scheduleJob('Update type movies','0 0 2 * * *', () => {
-  logger.info(tagJob.name);
+const typeJob = schedule.scheduleJob('Update type movies','0 5 12 * * *', () => {
+  logger.info(typeJob.name);
   updateDynamicMovies('type');
 });
 
 const newTagJob = schedule.scheduleJob('Update newTag movies','0 0 3 * * *', () => {
-  logger.info(tagJob.name);
+  logger.info(newTagJob.name);
   updateDynamicMovies('newTag');
 });
 
