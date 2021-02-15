@@ -39,19 +39,21 @@ export async function mergeMovie(): Promise<void>  {
     const movieIsLatest = movie.ratingPeople && (!dynamicMovie?.vote_count || (dynamicMovie.vote_count > movie.ratingPeople));
     const title = [dynamicMovie?.title || ''].concat((movie.title || '')?.replace(new RegExp(dynamicMovie?.title || ''), '').trim().replace(/\(\d+\)$/, ''));
     return await detailMovieCtl.update({
-      ...dynamicMovie,
-      ...movie,
-      rating: (movieIsLatest ? movie.rating : dynamicMovie?.rating) || 0,
+      id: movie.id,
       imdb: movie.IMDb,
-      betterThan: movie.betterThan?.trim().split(' '),
+      coverId: dynamicMovie?.coverId || movie.coverId,
+      rating: (movieIsLatest ? movie.rating : dynamicMovie?.rating) || 0,
       voteCount: movieIsLatest ? movie.ratingPeople : dynamicMovie?.vote_count,
       title: title.filter(item => !!item),
       alias: movie.alias?.split('/'),
-      update: transferTime(),
+      time: movie.time,
+      date: movie.date,
       actors: movie.actor?.split('/'),
       tags: dynamicMovie?.tags,
       types: dynamicMovie?.types || movie.type?.split('/'),
+      betterThan: movie.betterThan?.trim().split(' '),
       regions: dynamicMovie?.regions || movie.region?.split('/'),
+      update: transferTime(),
     })
   })
 }
