@@ -87,7 +87,7 @@ async function updateNewTags(tags = NEW_MOVIE_TAGS) {
               await dynamicMovieCtrl.update({
                 ...movie,
                 tag,
-                coverId: getCoverImageId(movie.cover),
+                coverId: getCoverImageId(movie.cover || movie.coverId),
                 update: transferTime(),
               });
             }
@@ -126,11 +126,12 @@ async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
       await logger.execOperate(title, endMsg, { operate: OPERATE_NAME, args: [tagIndex] }, async () => {
         const movies = await searchMoviesByTag(tag);
         for (let idIndex = 0; idIndex < movies.length; idIndex++) {
-          const movie = movies[idIndex];
+          const movie: DynamicMovieType & { cover?: string } = movies[idIndex];
           if (movie.id && tag) {
             await dynamicMovieCtrl.update({
               ...movie,
               tag,
+              coverId: getCoverImageId(movie.cover || movie.coverId),
               update: transferTime(),
             });
           }
