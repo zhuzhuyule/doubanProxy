@@ -4,7 +4,7 @@
   "description": "douban api proxy",
   "main": "./server",
   "scripts": {
-    "start": "npm run updateCode && nodemon --delay 2500ms --watch server --exec npm run server",
+    "start": "npm run updateCode && nodemon -e ts,js,json --delay 2500ms --watch server --exec npm run server",
     "start:test": "ts-node -r tsconfig-paths/register ./server/test.ts",
     "start:test:watch": "nodemon --watch server --exec ts-node -r tsconfig-paths/register ./server/test.ts",
     "server": "ts-node -r tsconfig-paths/register ./server/index.ts",
