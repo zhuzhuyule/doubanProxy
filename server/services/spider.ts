@@ -70,7 +70,7 @@ async function updateNewTags(tags = NEW_MOVIE_TAGS) {
     let start = page * 300;
     for (let len = tags.length; tagIndex < len; tagIndex++) {
       const tag = tags[tagIndex];
-      let movies: Array<DynamicMovieType & { cover?: string }> = [];
+      let movies: Array<DynamicMovieType & { cover?: string; rate?: string }> = [];
 
       logger.addGlobalContext(`Update "${tag}" tag movie | ${calcProcess(tagIndex, len)}`);
       do {
@@ -86,6 +86,7 @@ async function updateNewTags(tags = NEW_MOVIE_TAGS) {
             if (movie.id && tag) {
               await dynamicMovieCtrl.update({
                 ...movie,
+                rating: movie.rate || movie.rating,
                 tag,
                 coverId: getCoverImageId(movie.cover || movie.coverId),
                 update: transferTime(),
@@ -126,10 +127,11 @@ async function updateOldTags(tags = NORMAL_MOVIE_TYPES) {
       await logger.execOperate(title, endMsg, { operate: OPERATE_NAME, args: [tagIndex] }, async () => {
         const movies = await searchMoviesByTag(tag);
         for (let idIndex = 0; idIndex < movies.length; idIndex++) {
-          const movie: DynamicMovieType & { cover?: string } = movies[idIndex];
+          const movie: DynamicMovieType & { cover?: string; rate?: string } = movies[idIndex];
           if (movie.id && tag) {
             await dynamicMovieCtrl.update({
               ...movie,
+              rating: movie.rate || movie.rating,
               tag,
               coverId: getCoverImageId(movie.cover || movie.coverId),
               update: transferTime(),

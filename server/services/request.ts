@@ -105,7 +105,7 @@ export async function searchMovies(movieName: string): Promise<string[]> {
     })
 }
 
-export async function selectMoviesByType(tag: string, start = 0, pageCount = 800): Promise<[DynamicMovieType]> {
+export async function selectMoviesByType(tag: string, start = 0, pageCount = 800): Promise<[DynamicMovieType & { rate?: string }]> {
   return await request(`https://movie.douban.com/j/new_search_subjects`, {
     params: {
       sort: 'R',
