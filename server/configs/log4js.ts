@@ -63,6 +63,15 @@ const baseConfig = {
         daysToKeep: 7,
         maxLogSize: 1024 * 1024 * 5,
       },
+      schedule: {
+        type: 'dateFile',
+        filename: './log/db',
+        pattern: '-yyyy-MM-dd.log',
+        alwaysIncludePattern: true,
+        layout: baseLayout,
+        daysToKeep: 7,
+        maxLogSize: 1024 * 1024 * 5,
+      },
       api: {
         type: 'dateFile',
         filename: './log/api',
@@ -81,6 +90,11 @@ const baseConfig = {
       },
       test: {
         appenders: ['console', 'test'],
+        level: 'trace',
+        enableCallStack: true,
+      },
+      schedule: {
+        appenders: ['console', 'schedule'],
         level: 'trace',
         enableCallStack: true,
       },
