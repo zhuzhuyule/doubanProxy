@@ -1,6 +1,6 @@
 import schedule from 'node-schedule';
-import { getLogger } from 'log4js';
 import { updateDynamicMovies } from './spider';
+import { getLogger } from '@utils/logger';
 
 const logger = getLogger('schedule');
 

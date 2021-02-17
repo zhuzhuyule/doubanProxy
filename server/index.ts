@@ -9,6 +9,14 @@ import '@services/schedule';
 import { log4jsConfig } from '@configs/log4js';
 import { configure, connectLogger, getLogger } from '@utils/logger';
 
+const allowCrossDomain = function(_, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Credentials','true');
+  next();
+};
+
 try {
   configure(log4jsConfig.server);
 
@@ -17,6 +25,8 @@ try {
   const app = express();
 
   app.use(connectLogger(getLogger('api'), {}));
+
+  app.use(allowCrossDomain);
   // API router
   app.use('/api', apiRoutes);
 
