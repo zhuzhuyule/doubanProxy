@@ -87,6 +87,7 @@ const updateProgram = (folder = 'temp'): void => {
 };
 
 const pullCode = (): void => {
+  backupProgram();
   try {
     gitPull('https://github.com/zhuzhuyule/doubanProxy.git', './temp', () => {
       try {
@@ -101,7 +102,6 @@ const pullCode = (): void => {
 }
 
 export {
-  backupProgram,
   updateProgram,
   pullCode,
   updateTable,
